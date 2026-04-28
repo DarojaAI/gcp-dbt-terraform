@@ -86,8 +86,6 @@ resource "google_cloud_run_v2_job" "dbt" {
       max_retries = 0
     }
   }
-
-  depends_on = [google_project_service.cloudrun]
 }
 
 # =============================================================================
@@ -132,8 +130,8 @@ resource "google_secret_manager_secret_iam_member" "dbt_read_db_password" {
 # Security — allow dbt job to access VPC (for PostgreSQL connectivity)
 # =============================================================================
 
-resource "google_compute_network_iam_member" "dbt_vpc_access" {
+resource "google_compute_network_iam_binding" "dbt_vpc_access" {
   network = var.network_id
   role    = "roles/compute.networkUser"
-  member  = "serviceAccount:${google_service_account.dbt_runner.email}"
+  members = ["serviceAccount:${google_service_account.dbt_runner.email}"]
 }
