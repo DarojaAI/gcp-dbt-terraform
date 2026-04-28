@@ -1,47 +1,5 @@
 # =============================================================================
-# Cloud Run Job for dbt migrations and tests
-# Executes dbt with direct VPC access to PostgreSQL database
-# =============================================================================
-
-terraform {
-  required_version = ">= 1.6"
-
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 5.0"
-    }
-  }
-}
-
-# Enable Cloud Run API
-resource "google_project_service" "cloudrun" {
-  project = var.project_id
-  service = "cloudrun.googleapis.com"
-
-  disable_on_destroy = false
-}
-
-# =============================================================================
-# Service Account for dbt Cloud Run Job
-# =============================================================================
-
-resource "google_service_account" "dbt_runner" {
-  project      = var.project_id
-  account_id   = "${var.repo_prefix}-${var.environment}-dbt-runner"
-  display_name = "Service account for dbt Cloud Run Job (${var.environment})"
-  description  = "Executes dbt migrations on Cloud Run, accesses database secrets"
-}
-
-# Grant Secret Manager access (for database password, API keys, etc.)
-resource "google_project_iam_member" "dbt_runner_secrets" {
-  project = var.project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.dbt_runner.email}"
-}
-
-# =============================================================================
-# Cloud Run Job Definition
+# Cloud Run Job for dbt — Executes dbt migrations and tests
 # =============================================================================
 
 resource "google_cloud_run_v2_job" "dbt" {
@@ -51,75 +9,82 @@ resource "google_cloud_run_v2_job" "dbt" {
   labels   = var.labels
 
   template {
-    # Job timeout
-    timeout = "${var.job_timeout_seconds}s"
-
-    # Task configuration
-    task_count  = var.job_task_count
     parallelism = 1
+    task_count  = var.job_task_count
 
-    containers {
-      image = var.dbt_image_uri
+    template {
+      timeout = "${var.job_timeout_seconds}s"
 
-      # Environment variables — database connection
-      env {
-        name  = "POSTGRES_HOST"
-        value = var.postgres_host
-      }
+      containers {
+        image = var.dbt_image_uri
 
-      env {
-        name  = "POSTGRES_PORT"
-        value = tostring(var.postgres_port)
-      }
+        # Environment variables — database connection
+        env {
+          name  = "POSTGRES_HOST"
+          value = var.postgres_host
+        }
 
-      env {
-        name  = "POSTGRES_DB"
-        value = var.postgres_db
-      }
+        env {
+          name  = "POSTGRES_PORT"
+          value = tostring(var.postgres_port)
+        }
 
-      env {
-        name  = "POSTGRES_USER"
-        value = var.postgres_user
-      }
+        env {
+          name  = "POSTGRES_DB"
+          value = var.postgres_db
+        }
 
-      env {
-        name  = "DBT_SCHEMA_PREFIX"
-        value = var.dbt_schema_prefix
-      }
+        env {
+          name  = "POSTGRES_USER"
+          value = var.postgres_user
+        }
 
-      # Database password from Secret Manager (never hardcoded)
-      env {
-        name = "POSTGRES_PASSWORD"
-        value_source {
-          secret_key_ref {
-            secret  = var.postgres_password_secret
-            version = "latest"
+        env {
+          name  = "DBT_SCHEMA_PREFIX"
+          value = var.dbt_schema_prefix
+        }
+
+        env {
+          name  = "DBT_TARGET"
+          value = var.dbt_target
+        }
+
+        env {
+          name  = "DBT_COMMAND"
+          value = var.dbt_command
+        }
+
+        # Database password from Secret Manager (never hardcoded)
+        env {
+          name = "POSTGRES_PASSWORD"
+          value_source {
+            secret_key_ref {
+              secret  = var.postgres_password_secret
+              version = "latest"
+            }
+          }
+        }
+
+        # Resource limits
+        resources {
+          limits = {
+            cpu    = var.job_cpu
+            memory = var.job_memory
           }
         }
       }
 
-      # Resource limits
-      resources {
-        limits = {
-          cpu    = var.job_cpu
-          memory = var.job_memory
-        }
+      # VPC egress — direct access to PostgreSQL VM on private VPC
+      vpc_access {
+        connector = ""  # No VPC Connector needed for direct egress
+        egress    = "ALL_TRAFFIC"
       }
+
+      # Service account for the job
+      service_account = google_service_account.dbt_runner.email
+
+      max_retries = 0
     }
-
-    # VPC egress — direct access to PostgreSQL VM on private VPC
-    vpc_access {
-      # Use direct VPC egress (no VPC Connector needed)
-      egress = "ALL_TRAFFIC"
-
-      network_interfaces {
-        network    = var.network_id
-        subnetwork = var.subnetwork_id
-      }
-    }
-
-    # Service account for the job
-    service_account = google_service_account.dbt_runner.email
   }
 
   depends_on = [google_project_service.cloudrun]
@@ -129,17 +94,46 @@ resource "google_cloud_run_v2_job" "dbt" {
 # IAM — Allow GitHub Actions (WIF) to trigger the job
 # =============================================================================
 
-resource "google_cloud_run_v2_job_iam_member" "github_actions_developer" {
+resource "google_service_account_iam_member" "gha_wif_run_jobs" {
+  service_account_id = google_service_account.dbt_runner.name
+  role               = "roles/run.admin"
+  member             = "serviceAccount:${var.wif_service_account}"
+}
+
+resource "google_cloud_run_v2_job_iam_member" "gha_wif_execute" {
   project  = var.project_id
-  name     = google_cloud_run_v2_job.dbt.name
   location = google_cloud_run_v2_job.dbt.location
-  role     = "roles/run.developer"
+  name     = google_cloud_run_v2_job.dbt.name
+  role     = "roles/run.invoker"
   member   = "serviceAccount:${var.wif_service_account}"
 }
 
-# Allow GitHub Actions service account to view logs
-resource "google_project_iam_member" "github_actions_logs" {
-  project = var.project_id
-  role    = "roles/logging.viewer"
-  member  = "serviceAccount:${var.wif_service_account}"
+# =============================================================================
+# Service Account — for dbt job execution
+# =============================================================================
+
+resource "google_service_account" "dbt_runner" {
+  project      = var.project_id
+  account_id   = "${var.repo_prefix}-${var.environment}-dbt-runner"
+  display_name = "Service account for dbt Cloud Run Job (${var.environment})"
+}
+
+# =============================================================================
+# Security — allow dbt job to read database password from Secret Manager
+# =============================================================================
+
+resource "google_secret_manager_secret_iam_member" "dbt_read_db_password" {
+  secret_id = var.postgres_password_secret
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.dbt_runner.email}"
+}
+
+# =============================================================================
+# Security — allow dbt job to access VPC (for PostgreSQL connectivity)
+# =============================================================================
+
+resource "google_compute_network_iam_member" "dbt_vpc_access" {
+  network = var.network_id
+  role    = "roles/compute.networkUser"
+  member  = "serviceAccount:${google_service_account.dbt_runner.email}"
 }
