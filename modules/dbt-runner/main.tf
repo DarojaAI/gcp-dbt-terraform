@@ -128,10 +128,12 @@ resource "google_secret_manager_secret_iam_member" "dbt_read_db_password" {
 
 # =============================================================================
 # Security — allow dbt job to access VPC (for PostgreSQL connectivity)
+# Note: VPC access is controlled at the subnetwork level, not network level
+# The Cloud Run job will use the subnetwork specified in vpc_access config
 # =============================================================================
 
-resource "google_compute_network_iam_binding" "dbt_vpc_access" {
-  network = var.network_id
-  role    = "roles/compute.networkUser"
-  members = ["serviceAccount:${google_service_account.dbt_runner.email}"]
+resource "google_compute_subnetwork_iam_member" "dbt_vpc_access" {
+  subnetwork = var.subnetwork_id
+  role       = "roles/compute.networkUser"
+  member     = "serviceAccount:${google_service_account.dbt_runner.email}"
 }
