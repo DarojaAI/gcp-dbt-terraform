@@ -1,0 +1,16 @@
+# =============================================================================
+# dbt Core Requirements — Standard Packages for All Projects
+# =============================================================================
+# These packages are installed in every dbt Cloud Run Job
+# Project-specific requirements should be in:
+#   {calling-project}/dbt/requirements.txt
+#
+# This module provides the base dbt installation; calling projects can extend it
+# =============================================================================
+
+# dbt core and database adapters
+dbt-core>=1.8.0,<2.0
+dbt-postgres>=1.8.0,<2.0
+
+# YAML parsing utilities
+pyyaml>=6.0

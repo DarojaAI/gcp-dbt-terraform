@@ -1,0 +1,68 @@
+# =============================================================================
+# dbt Cloud Run Job Docker Image Template
+# =============================================================================
+# Reusable Docker image for dbt Cloud Run Jobs across all projects
+# This template is used by projects that import the gcp-dbt-terraform module
+#
+# Build Context:
+#   Docker build context should be the calling project repo (e.g., rag-research-tool)
+#   This Dockerfile expects:
+#   - dbt/ directory with:
+#     * dbt_project.yml
+#     * profiles.yml
+#     * models/ (SQL transformations)
+#     * tests/ (dbt tests)
+#     * requirements.txt (project-specific dbt dependencies)
+#
+# Environment variables (required at runtime):
+#   POSTGRES_HOST      PostgreSQL VM internal IP (10.0.x.x)
+#   POSTGRES_PORT      PostgreSQL port (default: 5432)
+#   POSTGRES_DB        Database name (defined by project)
+#   POSTGRES_USER      Database user (defined by project)
+#   POSTGRES_PASSWORD  Database password (via Secret Manager)
+#   DBT_SCHEMA_PREFIX  Schema prefix (default: project-defined)
+#   DBT_COMMAND        Command to execute (optional, uses default if not set)
+#
+# Cloud Run Job configuration:
+#   - VPC egress enabled to reach PostgreSQL VM on private network
+#   - Service account with Secret Manager access
+#   - Timeout: configurable (default: 1800s / 30 minutes)
+# =============================================================================
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dbt core + postgres adapter (from this module)
+# Note: Project-specific requirements come from COPY below
+RUN pip install --no-cache-dir \
+    dbt-core>=1.8.0,<2.0 \
+    dbt-postgres>=1.8.0,<2.0 \
+    pyyaml>=6.0
+
+# Copy project dbt files (from build context — the calling project repo)
+COPY dbt/ ./dbt/
+
+# Install project-specific Python dependencies (if dbt/requirements.txt exists)
+RUN if [ -f ./dbt/requirements.txt ]; then \
+    pip install --no-cache-dir -r ./dbt/requirements.txt; \
+    fi
+
+# Set working directory for dbt execution
+WORKDIR /app/dbt
+
+# Validate dbt project structure on startup
+# Uses default schema prefix from dbt_project.yml; can be overridden at runtime
+RUN dbt parse --vars '{"dbt_schema_prefix": "rag"}' || true
+
+# Entry point: run dbt
+# Supports DBT_COMMAND env var for custom command via Cloud Run Job configuration
+# Default: dbt run + dbt test (both against target specified in profiles.yml)
+ENTRYPOINT ["sh", "-c"]
+CMD ["${DBT_COMMAND:-dbt run --target prod --vars '{\"dbt_schema_prefix\": \"rag\"}' && dbt test --target prod}"]
