@@ -74,10 +74,12 @@ resource "google_cloud_run_v2_job" "dbt" {
         }
       }
 
-      # VPC egress — direct access to PostgreSQL VM on private VPC
+      # VPC access — direct access to PostgreSQL VM on private VPC
+      # Uses network + subnetwork for egress, not VPC Connector
       vpc_access {
-        connector = ""  # No VPC Connector needed for direct egress
-        egress    = "ALL_TRAFFIC"
+        network    = var.network_id
+        subnetwork = var.subnetwork_id
+        egress     = "PRIVATE_RANGES_ONLY"
       }
 
       # Service account for the job
@@ -92,9 +94,9 @@ resource "google_cloud_run_v2_job" "dbt" {
 # IAM — Allow GitHub Actions (WIF) to trigger the job
 # =============================================================================
 
-resource "google_service_account_iam_member" "gha_wif_run_jobs" {
+resource "google_service_account_iam_member" "gha_wif_service_account" {
   service_account_id = google_service_account.dbt_runner.name
-  role               = "roles/run.admin"
+  role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${var.wif_service_account}"
 }
 
