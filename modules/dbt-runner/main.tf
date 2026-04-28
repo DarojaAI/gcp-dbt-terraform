@@ -11,15 +11,6 @@ resource "google_cloud_run_v2_job" "dbt" {
   template {
     parallelism = 1
     task_count  = var.job_task_count
-    
-    # VPC configuration at template level (outer) for network egress
-    vpc_access {
-      network_interfaces {
-        network    = var.network_id
-        subnetwork = var.subnetwork_id
-      }
-      egress = "PRIVATE_RANGES_ONLY"
-    }
 
     template {
       timeout = "${var.job_timeout_seconds}s"
@@ -85,6 +76,15 @@ resource "google_cloud_run_v2_job" "dbt" {
 
       # Service account for the job
       service_account = google_service_account.dbt_runner.email
+
+      # VPC access for direct connectivity to PostgreSQL
+      vpc_access {
+        network_interfaces {
+          network    = var.network_id
+          subnetwork = var.subnetwork_id
+        }
+        egress = "PRIVATE_RANGES_ONLY"
+      }
 
       max_retries = 0
     }
