@@ -60,8 +60,8 @@ output "job_location" {
 }
 
 output "job_id" {
-  description = "Cloud Run Job ID"
-  value       = module.dbt_runner.job_id
+  description = "Cloud Run Job ID (derived from full name)"
+  value       = try(split("/", module.dbt_runner.job_full_name)[5], "")
 }
 
 output "service_account_email" {
