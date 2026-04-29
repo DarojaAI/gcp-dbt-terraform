@@ -69,7 +69,3 @@ output "service_account_email" {
   value       = module.dbt_runner.service_account_email
 }
 
-output "vpc_connector_id" {
-  description = "VPC Access Connector ID"
-  value       = module.dbt_runner.vpc_connector_id
-}
