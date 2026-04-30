@@ -13,7 +13,5 @@ terraform {
   }
 }
 
-provider "google" {
-  project = var.project_id
-  region  = var.region
-}
+# Provider is configured by the consuming root module.
+# This allows the module to be used with count, for_each, and depends_on.
