@@ -49,6 +49,9 @@ module "dbt_runner" {
 
   # Labels
   labels = var.labels
+
+  # Smoke Test
+  run_smoke_test = var.run_smoke_test
 }
 
 # =============================================================================

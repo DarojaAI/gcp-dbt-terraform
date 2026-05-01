@@ -140,3 +140,20 @@ resource "google_compute_subnetwork_iam_member" "dbt_vpc_access" {
   role       = "roles/compute.networkUser"
   member     = "serviceAccount:${google_service_account.dbt_runner.email}"
 }
+
+# =============================================================================
+# Smoke probe — verifies Cloud Run Job is queryable post-create
+# Opt-in via var.run_smoke_test. Requires gcloud on the apply runner.
+# =============================================================================
+
+resource "null_resource" "smoke_probe" {
+  count = var.run_smoke_test ? 1 : 0
+
+  triggers = {
+    job_id = google_cloud_run_v2_job.dbt.id
+  }
+
+  provisioner "local-exec" {
+    command = "gcloud run jobs describe ${google_cloud_run_v2_job.dbt.name} --region=${google_cloud_run_v2_job.dbt.location} --project=${var.project_id} --format=value(name)"
+  }
+}

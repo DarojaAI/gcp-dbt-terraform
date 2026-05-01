@@ -66,6 +66,20 @@ The dbt Docker image should be built and pushed separately (typically by GitHub 
 
 This keeps infrastructure (module) separate from CI/CD concerns (GitHub Actions).
 
+## Preflight (recommended for first deploys)
+
+Before your first `terraform apply` against a new project, run:
+
+    bash gcp-dbt-terraform/scripts/preflight.sh \
+      --project <your-project> \
+      --region <region> \
+      --secret <full-secret-path> \
+      --subnet <full-subnet-self-link> \
+      --wif-sa <wif-sa-email>
+
+Catches API/secret/subnet/IAM errors in seconds rather than minutes after a
+failed Cloud Run Job execution. See [`docs/PREFLIGHT.md`](docs/PREFLIGHT.md).
+
 ## Integration with gcp-postgres-terraform
 
 Use this module together with [gcp-postgres-terraform](https://github.com/DarojaAI/gcp-postgres-terraform):

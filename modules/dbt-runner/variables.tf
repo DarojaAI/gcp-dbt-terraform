@@ -161,3 +161,13 @@ variable "labels" {
     managed_by = "terraform"
   }
 }
+
+# =============================================================================
+# Smoke Test
+# =============================================================================
+
+variable "run_smoke_test" {
+  description = "Run `gcloud run jobs describe` after creation to verify the job is queryable. Requires gcloud on the apply runner. Default false."
+  type        = bool
+  default     = false
+}
