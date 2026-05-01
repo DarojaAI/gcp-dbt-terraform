@@ -64,13 +64,13 @@ module "dbt_runner" {
   project_id              = "my-project"
   environment             = "eai"
   region                  = "us-central1"
-  
+
   postgres_host           = "10.0.1.2"
   postgres_password_secret = "projects/123456/secrets/postgres-password/versions/latest"
-  
+
   network_id   = "rag-research-eai-vpc"
   subnetwork_id = "rag-research-eai-subnet"
-  
+
   dbt_image_uri           = "gcr.io/my-project/dbt:latest"
   wif_service_account     = "github-actions@my-project.iam.gserviceaccount.com"
 }
@@ -81,7 +81,7 @@ module "dbt_runner" {
 ```hcl
 module "postgres" {
   source = "github.com/DarojaAI/gcp-postgres-terraform//modules/postgres-vm"
-  
+
   project_id  = "my-project"
   environment = "eai"
   region      = "us-central1"
@@ -92,13 +92,13 @@ module "dbt_runner" {
 
   project_id              = "my-project"
   environment             = "eai"
-  
+
   postgres_host           = module.postgres.postgres_internal_ip
   postgres_password_secret = module.postgres.postgres_password_secret_id
-  
+
   network_id              = module.postgres.network_id
   subnetwork_id           = module.postgres.subnetwork_id
-  
+
   dbt_image_uri           = "gcr.io/my-project/dbt:latest"
   wif_service_account     = "github-actions@my-project.iam.gserviceaccount.com"
 }
