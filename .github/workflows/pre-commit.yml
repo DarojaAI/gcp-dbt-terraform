@@ -26,13 +26,17 @@ jobs:
           terraform_version: ~1.6
 
       - name: Initialize Terraform
-        run: terraform init -backend=false
+        run: |
+          terraform init -backend=false
+          cd examples/basic && terraform init -backend=false
 
       - name: Format check
         run: terraform fmt -check -recursive
 
       - name: Validate
-        run: terraform validate
+        run: |
+          terraform validate
+          cd examples/basic && terraform validate
 
       - name: Run terraform test
         run: terraform test -verbose
