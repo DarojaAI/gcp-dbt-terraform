@@ -1,6 +1,8 @@
 # =============================================================================
 # GCP dbt Runner Module - Root Variables
 # =============================================================================
+# Reusable Terraform module for Cloud Run Job-based dbt execution
+# Uses Hashicorp module structure: https://developer.hashicorp.com/terraform/language/modules/develop/structure
 
 variable "project_id" {
   description = "GCP project ID"
@@ -57,8 +59,10 @@ variable "postgres_user" {
 }
 
 variable "postgres_password_secret" {
-  description = "Fully qualified Secret Manager secret reference"
+  description = "Fully qualified Secret Manager secret reference (projects/X/secrets/Y/versions/Z or projects/X/secrets/Y)"
   type        = string
+  # Example: "projects/123456/secrets/postgres-password/versions/latest"
+  # Or: "projects/123456/secrets/postgres-password" (auto uses latest)
 }
 
 # =============================================================================
@@ -82,6 +86,7 @@ variable "subnetwork_id" {
 variable "dbt_image_uri" {
   description = "Full Docker image URI (e.g., gcr.io/project/dbt:latest)"
   type        = string
+  # Example: "gcr.io/globalbiting-dev/rag-research-eai-dbt:latest"
 }
 
 # =============================================================================
@@ -111,46 +116,50 @@ variable "dbt_command" {
 # =============================================================================
 
 variable "job_timeout_seconds" {
-  description = "Timeout for dbt job execution in seconds"
+  description = "Cloud Run Job timeout in seconds"
   type        = number
-  default     = 3600
+  default     = 1800 # 30 minutes
 }
 
 variable "job_cpu" {
-  description = "CPU allocation for dbt job (e.g., '1' or '2')"
+  description = "Cloud Run Job CPU allocation"
   type        = string
   default     = "2"
 }
 
 variable "job_memory" {
-  description = "Memory allocation for dbt job (e.g., '1Gi' or '2Gi')"
+  description = "Cloud Run Job memory allocation"
   type        = string
   default     = "2Gi"
 }
 
 variable "job_task_count" {
-  description = "Number of tasks to run in parallel"
+  description = "Number of parallel tasks"
   type        = number
   default     = 1
 }
 
 # =============================================================================
-# GitHub Actions Integration
+# Authentication & IAM
 # =============================================================================
 
 variable "wif_service_account" {
-  description = "GitHub Actions WIF service account email"
+  description = "Workload Identity Federation service account email (typically GitHub Actions SA)"
   type        = string
+  # Example: "github-actions@your-project.iam.gserviceaccount.com"
 }
 
 # =============================================================================
-# Labels
+# Labeling
 # =============================================================================
 
 variable "labels" {
-  description = "GCP labels for all resources"
+  description = "Labels to apply to resources"
   type        = map(string)
-  default     = {}
+  default = {
+    component  = "dbt"
+    managed_by = "terraform"
+  }
 }
 
 # =============================================================================
@@ -158,7 +167,7 @@ variable "labels" {
 # =============================================================================
 
 variable "run_smoke_test" {
-  description = "Run a post-create `gcloud run jobs describe` probe. Requires gcloud on the apply runner. Default false."
+  description = "Run `gcloud run jobs describe` after creation to verify the job is queryable. Requires gcloud on the apply runner. Default false."
   type        = bool
   default     = false
 }
