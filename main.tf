@@ -41,6 +41,12 @@ module "dbt_runner" {
   # GitHub Actions WIF
   wif_service_account = var.wif_service_account
 
+  # Cloud Run Job Configuration
+  job_timeout_seconds = var.job_timeout_seconds
+  job_cpu             = var.job_cpu
+  job_memory          = var.job_memory
+  job_task_count      = var.job_task_count
+
   # Labels
   labels = var.labels
 }
@@ -68,4 +74,3 @@ output "service_account_email" {
   description = "Service account email for dbt Cloud Run Job"
   value       = module.dbt_runner.service_account_email
 }
-
