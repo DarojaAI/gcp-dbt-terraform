@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Detect version
         id: version
         run: |
@@ -32,7 +32,7 @@ jobs:
             echo "WARNING: No VERSION file found, using commit hash: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
+
       - name: Ensure version tag
         id: tag_check
         run: |
@@ -40,14 +40,14 @@ jobs:
           if [[ ! "$VERSION" =~ ^v ]]; then
             VERSION="v$VERSION"
           fi
-          
+
           if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "tag=$VERSION" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Create GitHub Release
         if: steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1

@@ -14,6 +14,7 @@ module "dbt_runner" {
   subnetwork_id = "projects/fake-project/regions/us-central1/subnetworks/fake-subnet"
 
   # Postgres — fake values, full Secret Manager path format
+  # checkov:skip=CKV_SECRET_6: This is a fake/test placeholder, not a real secret
   postgres_host            = "10.0.0.2"
   postgres_port            = 5432
   postgres_db              = "rag_taxonomy"

@@ -34,21 +34,21 @@ module "dbt_runner" {
   project_id              = "your-project"
   environment             = "eai"
   region                  = "us-central1"
-  
+
   # Database connection (from PostgreSQL module or hardcoded)
   postgres_host           = "10.0.1.2"
   postgres_port           = 5432
   postgres_db             = "rag_taxonomy"
   postgres_user           = "rag_admin"
   postgres_password_secret = "projects/123/secrets/postgres-password/versions/latest"
-  
+
   # VPC configuration
   network_id              = "rag-research-eai-vpc"
   subnetwork_id           = "rag-research-eai-subnet"
-  
+
   # Docker image location
   dbt_image_uri           = "gcr.io/your-project/dbt:latest"
-  
+
   # WIF service account (GitHub Actions authentication)
   wif_service_account     = "github-actions@your-project.iam.gserviceaccount.com"
 }
@@ -92,7 +92,7 @@ module "postgres" {
 
 module "dbt_runner" {
   source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
-  
+
   postgres_host = module.postgres.internal_ip
   postgres_port = 5432
   # ... other configuration
