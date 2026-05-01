@@ -152,3 +152,13 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+# =============================================================================
+# Smoke Test
+# =============================================================================
+
+variable "run_smoke_test" {
+  description = "Run a post-create `gcloud run jobs describe` probe. Requires gcloud on the apply runner. Default false."
+  type        = bool
+  default     = false
+}
