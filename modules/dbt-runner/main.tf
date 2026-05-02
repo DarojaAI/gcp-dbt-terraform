@@ -186,9 +186,11 @@ locals {
 resource "google_storage_bucket" "artifacts" {
   count = local.artifacts_enabled ? 1 : 0
 
-  project       = var.project_id
-  name          = var.artifacts_bucket_name
-  location      = coalesce(var.artifacts_bucket_location, var.region)
+  project  = var.project_id
+  name     = var.artifacts_bucket_name
+  location = coalesce(var.artifacts_bucket_location, var.region)
+  # Intentional: artifacts are historical and shouldn't vanish on a destroy.
+  # Operator must empty the bucket manually to tear down.
   force_destroy = false
   labels        = var.labels
 

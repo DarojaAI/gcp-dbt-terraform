@@ -210,6 +210,10 @@ variable "dbt_env_vars" {
   }
 }
 
+# =============================================================================
+# dbt Artifacts (manifest.json, catalog.json) — optional
+# =============================================================================
+
 variable "artifacts_bucket_name" {
   description = "Optional GCS bucket for dbt artifacts. Leave null to disable."
   type        = string
