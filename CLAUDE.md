@@ -57,9 +57,9 @@ tflint --init --config=.tflint.hcl       # one-time per machine
 tflint --config=.tflint.hcl              # google ruleset, version pinned in .tflint.hcl
 ```
 
-A pre-commit config exists (`.pre-commit-config.yaml`) wiring up `terraform_fmt`, `terraform_validate`, `terraform_docs`, `checkov`, `gitleaks`, `yamllint`, and `shellcheck`. Run `pre-commit install` once, then `pre-commit run --all-files` to execute everything locally.
+A pre-commit config exists (`.pre-commit-config.yaml`) wiring up `terraform_fmt` and `terraform_validate`. Run `pre-commit install` once, then `pre-commit run --all-files` to execute everything locally.
 
-Note: the checkov hook is configured with `--directory terraform/` which **does not exist in this repo** — that path is a leftover from a different layout. `terraform validate` and `tflint` are the load-bearing checks; checkov is currently a no-op here.
+Checkov and gitleaks run in GitHub Actions (`.github/workflows/security.yml`) rather than as pre-commit hooks. `terraform validate`, `tflint`, and checkov together are the load-bearing checks.
 
 ### Validating the Docker image (run from the *calling* project)
 ```bash

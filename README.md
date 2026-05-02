@@ -1,138 +1,71 @@
-# gcp-dbt-terraform
+# terraform-google-dbt-runner
 
-Reusable Terraform module for deploying dbt on Google Cloud Platform via Cloud Run Jobs.
+A reusable Terraform module that provisions a Cloud Run Job for executing dbt
+against a private PostgreSQL database on GCP, with direct VPC egress, Workload
+Identity Federation for GitHub Actions, and Secret Manager-backed credentials.
 
-**Key Features:**
-- ✅ Cloud Run Job for executing dbt migrations and tests
-- ✅ VPC egress to access private databases (PostgreSQL VMs on Compute Engine)
-- ✅ Service Account with Secret Manager access for database credentials
-- ✅ IAM bindings for GitHub Actions WIF authentication
-- ✅ Environment-agnostic (works with dev, staging, prod, etc.)
-- ✅ Reusable across multiple projects
-
-## Module Structure
-
-```
-modules/
-  └── dbt-runner/
-      ├── main.tf          # Cloud Run Job, Service Account, IAM
-      ├── variables.tf     # Input variables
-      ├── outputs.tf       # Output values
-      └── README.md        # Module documentation
-
-examples/
-  ├── basic/               # Minimal example
-  └── with-postgres-module/  # Using gcp-postgres-terraform module
-```
-
-## Quick Start
+## Usage
 
 ```hcl
 module "dbt_runner" {
-  source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
+  source  = "github.com/DarojaAI/terraform-google-dbt-runner?ref=v1.1.0"
 
-  project_id              = "your-project"
-  environment             = "eai"
-  region                  = "us-central1"
+  project_id  = "my-gcp-project"
+  environment = "prod"
 
-  # Database connection (from PostgreSQL module or hardcoded)
-  postgres_host           = "10.0.1.2"
-  postgres_port           = 5432
-  postgres_db             = "rag_taxonomy"
-  postgres_user           = "rag_admin"
-  postgres_password_secret = "projects/123/secrets/postgres-password/versions/latest"
+  network_id    = "projects/my-project/global/networks/my-vpc"
+  subnetwork_id = "projects/my-project/regions/us-central1/subnetworks/my-subnet"
 
-  # VPC configuration
-  network_id              = "rag-research-eai-vpc"
-  subnetwork_id           = "rag-research-eai-subnet"
+  postgres_host            = "10.0.0.2"
+  postgres_password_secret = "projects/123/secrets/db-password"
 
-  # Docker image location
-  dbt_image_uri           = "gcr.io/your-project/dbt:latest"
-
-  # WIF service account (GitHub Actions authentication)
-  wif_service_account     = "github-actions@your-project.iam.gserviceaccount.com"
+  dbt_image_uri       = "gcr.io/my-project/dbt:latest"
+  wif_service_account = "github-actions@my-project.iam.gserviceaccount.com"
 }
 ```
 
-## Docker Image
+## Architecture
 
-The dbt Docker image should be built and pushed separately (typically by GitHub Actions).
+This module wires up:
 
-**Recommended approach:**
-1. GitHub Actions builds the image using `Dockerfile.dbt`
-2. Pushes to GCR: `gcr.io/{project}/{image}:{tag}`
-3. Module references the image URI
-4. Cloud Run Job executes with the specified image
+1. A `google_cloud_run_v2_job` with direct VPC egress (`PRIVATE_RANGES_ONLY`).
+2. A dedicated service account `<repo_prefix>-<environment>-dbt-runner`.
+3. IAM bindings so the job can read the Postgres password from Secret Manager
+   and reach the private subnetwork.
+4. A `roles/run.invoker` binding so a Workload-Identity-Federated GitHub
+   Actions service account can `gcloud run jobs execute` the job.
 
-This keeps infrastructure (module) separate from CI/CD concerns (GitHub Actions).
+The Postgres password is **never** a Terraform variable — pass a Secret Manager
+reference and the job pulls it via `value_source.secret_key_ref` at runtime.
 
-## Preflight (recommended for first deploys)
+## Examples
 
-Before your first `terraform apply` against a new project, run:
+| Example | Demonstrates |
+|---|---|
+| [basic](./examples/basic/) | Minimal usage; CI fixture |
+| [with-env-vars](./examples/with-env-vars/) | Custom container env vars |
+| [with-artifacts-bucket](./examples/with-artifacts-bucket/) | GCS bucket for dbt manifest/catalog |
+| [with-failure-notifications](./examples/with-failure-notifications/) | Pub/Sub sink on Cloud Run Job failure |
 
-    bash gcp-dbt-terraform/scripts/preflight.sh \
-      --project <your-project> \
-      --region <region> \
-      --secret <full-secret-path> \
-      --subnet <full-subnet-self-link> \
-      --wif-sa <wif-sa-email>
+## Provider configuration
 
-Catches API/secret/subnet/IAM errors in seconds rather than minutes after a
-failed Cloud Run Job execution. See [`docs/PREFLIGHT.md`](docs/PREFLIGHT.md).
+This module does NOT declare a `provider "google"` block — the calling root
+module must configure the provider. This is deliberate: a module with its own
+provider block can't be used with `count`, `for_each`, or `depends_on`.
 
-## Integration with gcp-postgres-terraform
+## Compatibility
 
-Use this module together with [gcp-postgres-terraform](https://github.com/DarojaAI/gcp-postgres-terraform):
+- Terraform: `>= 1.6`
+- Google provider: `~> 7.0`
 
-```hcl
-module "postgres" {
-  source = "github.com/DarojaAI/gcp-postgres-terraform//modules/postgres-vm"
-  # ... configuration
-}
+See [VERSIONS.md](./VERSIONS.md) for the full compatibility matrix.
 
-module "dbt_runner" {
-  source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
+## Releasing
 
-  postgres_host = module.postgres.internal_ip
-  postgres_port = 5432
-  # ... other configuration
-}
-```
-
-## Inputs
-
-See `modules/dbt-runner/variables.tf` for complete list.
-
-Key variables:
-- `project_id` — GCP project
-- `environment` — Environment name (dev, staging, prod, eai)
-- `postgres_*` — Database connection details
-- `dbt_image_uri` — Docker image location
-- `network_id`, `subnetwork_id` — VPC for database access
-- `wif_service_account` — GitHub Actions WIF service account
-
-## Outputs
-
-See `modules/dbt-runner/outputs.tf` for complete list.
-
-Key outputs:
-- `job_name` — Cloud Run Job name (use in GitHub Actions)
-- `job_location` — Cloud Run Job location
-- `service_account_email` — Service account for the job
-
-## GitHub Actions Integration
-
-Trigger the job from GitHub Actions:
-
-```yaml
-- name: Execute dbt via Cloud Run Job
-  run: |
-    gcloud run jobs execute ${{ steps.terraform.outputs.job_name }} \
-      --region ${{ vars.REGION }} \
-      --project ${{ vars.GCP_PROJECT_ID }} \
-      --wait
-```
+See [RELEASE.md](./RELEASE.md). Briefly: edit the `VERSION` file on `main`,
+push, and the `release.yml` workflow tags `vX.Y.Z` and creates a GitHub
+Release.
 
 ## License
 
-Apache 2.0
+Apache 2.0 — see [LICENSE](./LICENSE).

@@ -59,7 +59,7 @@ This module creates a Cloud Run Job that executes dbt (data build tool) with dir
 
 ```hcl
 module "dbt_runner" {
-  source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
+  source  = "github.com/DarojaAI/terraform-google-dbt-runner//modules/dbt-runner?ref=v1.1.0"
 
   project_id              = "my-project"
   environment             = "eai"
@@ -88,7 +88,7 @@ module "postgres" {
 }
 
 module "dbt_runner" {
-  source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
+  source  = "github.com/DarojaAI/terraform-google-dbt-runner//modules/dbt-runner?ref=v1.1.0"
 
   project_id              = "my-project"
   environment             = "eai"
