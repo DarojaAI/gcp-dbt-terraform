@@ -1,0 +1,31 @@
+{
+  ".": {
+    "changelog-path": "CHANGELOG.md",
+    "changelog-sections": [
+      {
+        "type": "feat",
+        "section": "Features",
+        "hidden": false
+      },
+      {
+        "type": "fix",
+        "section": "Bug Fixes",
+        "hidden": false
+      },
+      {
+        "type": "perf",
+        "section": "Performance",
+        "hidden": false
+      },
+      {
+        "type": "revert",
+        "section": "Reverts",
+        "hidden": false
+      }
+    ],
+    "release-type": "terraform-module",
+    "prerelease-type": "dev",
+    "include-v-in-tag": true,
+    "initial-version": "1.0.0"
+  }
+}
