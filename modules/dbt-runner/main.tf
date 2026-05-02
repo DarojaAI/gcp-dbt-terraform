@@ -40,8 +40,8 @@ resource "google_cloud_run_v2_job" "dbt" {
         }
 
         env {
-          name  = "DBT_SCHEMA_PREFIX"
-          value = var.dbt_schema_prefix
+          name  = "REPO_PREFIX"
+          value = var.repo_prefix
         }
 
         env {
