@@ -63,6 +63,14 @@ resource "google_cloud_run_v2_job" "dbt" {
           }
         }
 
+        dynamic "env" {
+          for_each = local.artifacts_enabled ? [1] : []
+          content {
+            name  = "DBT_ARTIFACTS_BUCKET"
+            value = google_storage_bucket.artifacts[0].name
+          }
+        }
+
         # Database password from Secret Manager (never hardcoded)
         env {
           name = "POSTGRES_PASSWORD"
@@ -165,4 +173,46 @@ resource "null_resource" "smoke_probe" {
   provisioner "local-exec" {
     command = "gcloud run jobs describe ${google_cloud_run_v2_job.dbt.name} --region=${google_cloud_run_v2_job.dbt.location} --project=${var.project_id} --format=value(name)"
   }
+}
+
+# =============================================================================
+# dbt Artifacts Bucket — optional, created only when artifacts_bucket_name set
+# =============================================================================
+
+locals {
+  artifacts_enabled = var.artifacts_bucket_name != null
+}
+
+resource "google_storage_bucket" "artifacts" {
+  count = local.artifacts_enabled ? 1 : 0
+
+  project       = var.project_id
+  name          = var.artifacts_bucket_name
+  location      = coalesce(var.artifacts_bucket_location, var.region)
+  force_destroy = false
+  labels        = var.labels
+
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    condition {
+      age        = 90
+      with_state = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_member" "dbt_artifacts_writer" {
+  count = local.artifacts_enabled ? 1 : 0
+
+  bucket = google_storage_bucket.artifacts[0].name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.dbt_runner.email}"
 }

@@ -209,3 +209,15 @@ variable "dbt_env_vars" {
     error_message = "dbt_env_vars cannot override reserved keys: POSTGRES_*, DBT_SCHEMA_PREFIX, DBT_TARGET, DBT_COMMAND. Use the dedicated variables for those."
   }
 }
+
+variable "artifacts_bucket_name" {
+  description = "Optional GCS bucket for dbt artifacts. Leave null to disable."
+  type        = string
+  default     = null
+}
+
+variable "artifacts_bucket_location" {
+  description = "Location for the artifacts bucket. Defaults to var.region."
+  type        = string
+  default     = null
+}

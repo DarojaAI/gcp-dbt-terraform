@@ -42,6 +42,16 @@ output "parallelism" {
   value       = google_cloud_run_v2_job.dbt.template[0].parallelism
 }
 
+output "artifacts_bucket_name" {
+  description = "GCS bucket name for dbt artifacts (null if disabled)."
+  value       = local.artifacts_enabled ? google_storage_bucket.artifacts[0].name : null
+}
+
+output "artifacts_bucket_url" {
+  description = "gs:// URL of the dbt artifacts bucket (null if disabled)."
+  value       = local.artifacts_enabled ? google_storage_bucket.artifacts[0].url : null
+}
+
 # GitHub Actions command to execute the job
 output "github_actions_execute_command" {
   description = "GitHub Actions command to execute the dbt job"

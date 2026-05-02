@@ -57,6 +57,10 @@ module "dbt_runner" {
 
   # Custom env vars
   dbt_env_vars = var.dbt_env_vars
+
+  # Artifacts bucket
+  artifacts_bucket_name     = var.artifacts_bucket_name
+  artifacts_bucket_location = var.artifacts_bucket_location
 }
 
 # =============================================================================
@@ -96,4 +100,14 @@ output "max_retries" {
 output "parallelism" {
   description = "Resolved parallelism on the Cloud Run Job."
   value       = module.dbt_runner.parallelism
+}
+
+output "artifacts_bucket_name" {
+  description = "GCS bucket name for dbt artifacts (null if disabled)."
+  value       = module.dbt_runner.artifacts_bucket_name
+}
+
+output "artifacts_bucket_url" {
+  description = "gs:// URL of the dbt artifacts bucket (null if disabled)."
+  value       = module.dbt_runner.artifacts_bucket_url
 }

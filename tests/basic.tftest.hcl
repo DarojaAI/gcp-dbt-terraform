@@ -104,3 +104,40 @@ run "with_env_vars_plan" {
     error_message = "ELEMENTARY_PROFILE env var should be present on the dbt container"
   }
 }
+
+run "with_artifacts_bucket_plan" {
+  command = plan
+
+  module {
+    source = "./examples/with-artifacts-bucket"
+  }
+
+  # Bucket name is propagated to output
+  assert {
+    condition     = module.dbt_runner.artifacts_bucket_name == "fake-rag-research-ci-dbt-artifacts"
+    error_message = "artifacts_bucket_name should match the input"
+  }
+
+  # Container env exposes the bucket so dbt can write to it
+  assert {
+    condition = anytrue([
+      for e in module.dbt_runner.container_env_names :
+      e == "DBT_ARTIFACTS_BUCKET"
+    ])
+    error_message = "DBT_ARTIFACTS_BUCKET env var should be present when artifacts_bucket_name is set"
+  }
+}
+
+run "no_artifacts_bucket_default" {
+  command = plan
+
+  module {
+    source = "./examples/basic"
+  }
+
+  # When unset, output is null
+  assert {
+    condition     = module.dbt_runner.artifacts_bucket_name == null
+    error_message = "artifacts_bucket_name should be null when no bucket is configured"
+  }
+}

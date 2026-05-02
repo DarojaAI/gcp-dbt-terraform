@@ -214,3 +214,24 @@ variable "dbt_env_vars" {
     error_message = "dbt_env_vars cannot override reserved keys: POSTGRES_*, DBT_SCHEMA_PREFIX, DBT_TARGET, DBT_COMMAND. Use the dedicated variables for those."
   }
 }
+
+# =============================================================================
+# dbt Artifacts (manifest.json, catalog.json) — optional
+# =============================================================================
+
+variable "artifacts_bucket_name" {
+  description = "Optional GCS bucket name (without gs:// prefix) for dbt to upload target/manifest.json and target/catalog.json after each run. Leave null to disable. The dbt container is responsible for actually uploading; this module only provisions the bucket and IAM."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.artifacts_bucket_name == null || can(regex("^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$", coalesce(var.artifacts_bucket_name, "x")))
+    error_message = "artifacts_bucket_name must be a valid GCS bucket name (lowercase, 3-63 chars, no leading/trailing dots or hyphens)."
+  }
+}
+
+variable "artifacts_bucket_location" {
+  description = "Location for the artifacts bucket (e.g. US, EU, us-central1). Defaults to var.region."
+  type        = string
+  default     = null
+}
