@@ -1,5 +1,9 @@
 # dbt-runner Module
 
+> **Note:** This module is in the process of being renamed from `gcp-dbt-terraform`
+> to `terraform-google-dbt-runner` for Terraform Registry compatibility. Until the
+> rename ships, use `github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner` in source URLs.
+
 Terraform module for Cloud Run Job-based dbt execution with VPC access to private databases.
 
 ## Overview

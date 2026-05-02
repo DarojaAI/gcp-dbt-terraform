@@ -1,5 +1,9 @@
 # terraform-google-dbt-runner
 
+> **Note:** This module is in the process of being renamed from `gcp-dbt-terraform`
+> to `terraform-google-dbt-runner` for Terraform Registry compatibility. Until the
+> rename ships, use `github.com/DarojaAI/gcp-dbt-terraform` in source URLs.
+
 A reusable Terraform module that provisions a Cloud Run Job for executing dbt
 against a private PostgreSQL database on GCP, with direct VPC egress, Workload
 Identity Federation for GitHub Actions, and Secret Manager-backed credentials.
