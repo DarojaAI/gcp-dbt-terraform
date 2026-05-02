@@ -52,6 +52,9 @@ module "dbt_runner" {
 
   # Smoke Test
   run_smoke_test = var.run_smoke_test
+
+  # Custom env vars
+  dbt_env_vars = var.dbt_env_vars
 }
 
 # =============================================================================
@@ -76,4 +79,9 @@ output "job_id" {
 output "service_account_email" {
   description = "Service account email for dbt Cloud Run Job"
   value       = module.dbt_runner.service_account_email
+}
+
+output "container_env_names" {
+  description = "Names of all env vars set on the dbt container."
+  value       = module.dbt_runner.container_env_names
 }

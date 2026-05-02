@@ -54,6 +54,15 @@ resource "google_cloud_run_v2_job" "dbt" {
           value = var.dbt_command
         }
 
+        # Caller-supplied plain env vars (validated to not collide with reserved keys)
+        dynamic "env" {
+          for_each = var.dbt_env_vars
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
         # Database password from Secret Manager (never hardcoded)
         env {
           name = "POSTGRES_PASSWORD"

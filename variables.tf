@@ -179,3 +179,13 @@ variable "run_smoke_test" {
   type        = bool
   default     = false
 }
+
+# =============================================================================
+# Custom Environment Variables (pass-through)
+# =============================================================================
+
+variable "dbt_env_vars" {
+  description = "Additional plain (non-secret) env vars to set on the dbt container. See modules/dbt-runner/variables.tf for restrictions."
+  type        = map(string)
+  default     = {}
+}

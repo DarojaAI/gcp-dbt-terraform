@@ -179,3 +179,21 @@ variable "run_smoke_test" {
   type        = bool
   default     = false
 }
+
+# =============================================================================
+# Custom Environment Variables
+# =============================================================================
+
+variable "dbt_env_vars" {
+  description = "Additional plain (non-secret) env vars to set on the dbt container. Reserved keys (POSTGRES_*, DBT_*) cannot be overridden."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition = length([
+      for k in keys(var.dbt_env_vars) :
+      k if can(regex("^(POSTGRES_|DBT_SCHEMA_PREFIX|DBT_TARGET|DBT_COMMAND)$", k))
+    ]) == 0
+    error_message = "dbt_env_vars cannot override reserved keys: POSTGRES_*, DBT_SCHEMA_PREFIX, DBT_TARGET, DBT_COMMAND. Use the dedicated variables for those."
+  }
+}
