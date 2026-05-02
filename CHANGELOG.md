@@ -13,7 +13,7 @@ All notable changes to this module are documented in this file.
 
 ### Changed
 - README rewritten for Terraform Registry compatibility
-- Pre-commit checkov hook now scans the repo root instead of a non-existent path
+- Pre-commit hooks reduced to terraform_fmt and terraform_validate; checkov and gitleaks run in GitHub Actions (`.github/workflows/security.yml`) instead
 
 ## [1.0.1]
 - Use `REPO_PREFIX` env var in `dbt_project.yml` instead of `DBT_SCHEMA_PREFIX` (commit 1763196)
