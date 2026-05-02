@@ -30,6 +30,44 @@ run "basic_plan_composes" {
   }
 }
 
+run "rejects_reserved_postgres_env_var" {
+  command = plan
+
+  # Test at the root module level so expect_failures can reference var.dbt_env_vars
+  # (which now carries the same validation block as the nested module variable).
+  variables {
+    project_id               = "fake-project"
+    environment              = "ci"
+    network_id               = "projects/fake-project/global/networks/fake-vpc"
+    subnetwork_id            = "projects/fake-project/regions/us-central1/subnetworks/fake-subnet"
+    postgres_host            = "10.0.0.2"
+    postgres_password_secret = "projects/000000000000/secrets/fake-postgres-password/versions/latest"
+    dbt_image_uri            = "gcr.io/fake-project/dbt:latest"
+    wif_service_account      = "github-actions@fake-project.iam.gserviceaccount.com"
+    dbt_env_vars             = { POSTGRES_HOST = "10.0.0.99" }
+  }
+
+  expect_failures = [var.dbt_env_vars]
+}
+
+run "rejects_reserved_dbt_target_env_var" {
+  command = plan
+
+  variables {
+    project_id               = "fake-project"
+    environment              = "ci"
+    network_id               = "projects/fake-project/global/networks/fake-vpc"
+    subnetwork_id            = "projects/fake-project/regions/us-central1/subnetworks/fake-subnet"
+    postgres_host            = "10.0.0.2"
+    postgres_password_secret = "projects/000000000000/secrets/fake-postgres-password/versions/latest"
+    dbt_image_uri            = "gcr.io/fake-project/dbt:latest"
+    wif_service_account      = "github-actions@fake-project.iam.gserviceaccount.com"
+    dbt_env_vars             = { DBT_TARGET = "dev" }
+  }
+
+  expect_failures = [var.dbt_env_vars]
+}
+
 run "with_env_vars_plan" {
   command = plan
 
