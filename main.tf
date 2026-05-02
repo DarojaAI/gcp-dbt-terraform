@@ -46,6 +46,8 @@ module "dbt_runner" {
   job_cpu             = var.job_cpu
   job_memory          = var.job_memory
   job_task_count      = var.job_task_count
+  job_max_retries     = var.job_max_retries
+  job_parallelism     = var.job_parallelism
 
   # Labels
   labels = var.labels
@@ -84,4 +86,14 @@ output "service_account_email" {
 output "container_env_names" {
   description = "Names of all env vars set on the dbt container."
   value       = module.dbt_runner.container_env_names
+}
+
+output "max_retries" {
+  description = "Resolved max_retries on the Cloud Run Job."
+  value       = module.dbt_runner.max_retries
+}
+
+output "parallelism" {
+  description = "Resolved parallelism on the Cloud Run Job."
+  value       = module.dbt_runner.parallelism
 }

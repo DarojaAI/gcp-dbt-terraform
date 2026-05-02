@@ -147,6 +147,23 @@ variable "job_task_count" {
   default     = 1
 }
 
+variable "job_max_retries" {
+  description = "Number of retries for a failed Cloud Run Job task. Default 0 (no retries) preserves current behavior; raise to 1–3 only if the dbt job is idempotent on partial failure."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.job_max_retries >= 0 && var.job_max_retries <= 10
+    error_message = "job_max_retries must be between 0 and 10 (Cloud Run hard limit)."
+  }
+}
+
+variable "job_parallelism" {
+  description = "Number of tasks that may run in parallel. Must be <= job_task_count. dbt is generally not safe to run in parallel against the same warehouse — leave at 1 unless you know what you're doing."
+  type        = number
+  default     = 1
+}
+
 # =============================================================================
 # Authentication & IAM
 # =============================================================================

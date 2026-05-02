@@ -9,7 +9,7 @@ resource "google_cloud_run_v2_job" "dbt" {
   labels   = var.labels
 
   template {
-    parallelism = 1
+    parallelism = var.job_parallelism
     task_count  = var.job_task_count
 
     template {
@@ -95,7 +95,7 @@ resource "google_cloud_run_v2_job" "dbt" {
         egress = "PRIVATE_RANGES_ONLY"
       }
 
-      max_retries = 0
+      max_retries = var.job_max_retries
     }
   }
 }

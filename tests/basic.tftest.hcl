@@ -28,6 +28,18 @@ run "basic_plan_composes" {
     condition     = can(regex("^rag-research-ci-dbt-runner@", module.dbt_runner.service_account_email))
     error_message = "service_account_email should start with rag-research-ci-dbt-runner@"
   }
+
+  # Defaults: max_retries = 0 (matches current hardcoded behavior)
+  assert {
+    condition     = module.dbt_runner.max_retries == 0
+    error_message = "max_retries default must remain 0 (no behavior change)"
+  }
+
+  # Defaults: parallelism = 1
+  assert {
+    condition     = module.dbt_runner.parallelism == 1
+    error_message = "parallelism default must remain 1 (no behavior change)"
+  }
 }
 
 run "rejects_reserved_postgres_env_var" {

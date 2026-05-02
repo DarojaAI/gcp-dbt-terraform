@@ -32,6 +32,16 @@ output "container_env_names" {
   value       = [for e in google_cloud_run_v2_job.dbt.template[0].template[0].containers[0].env : e.name]
 }
 
+output "max_retries" {
+  description = "Resolved max_retries on the Cloud Run Job — used by terraform test."
+  value       = google_cloud_run_v2_job.dbt.template[0].template[0].max_retries
+}
+
+output "parallelism" {
+  description = "Resolved parallelism on the Cloud Run Job — used by terraform test."
+  value       = google_cloud_run_v2_job.dbt.template[0].parallelism
+}
+
 # GitHub Actions command to execute the job
 output "github_actions_execute_command" {
   description = "GitHub Actions command to execute the dbt job"

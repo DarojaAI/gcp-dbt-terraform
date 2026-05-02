@@ -147,6 +147,18 @@ variable "job_task_count" {
   default     = 1
 }
 
+variable "job_max_retries" {
+  description = "Number of retries for a failed Cloud Run Job task. Default 0 (no retries)."
+  type        = number
+  default     = 0
+}
+
+variable "job_parallelism" {
+  description = "Number of tasks that may run in parallel. Must be <= job_task_count."
+  type        = number
+  default     = 1
+}
+
 # =============================================================================
 # Authentication & IAM
 # =============================================================================
