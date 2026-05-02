@@ -141,3 +141,21 @@ run "no_artifacts_bucket_default" {
     error_message = "artifacts_bucket_name should be null when no bucket is configured"
   }
 }
+
+run "with_failure_notifications_plan" {
+  command = plan
+
+  module {
+    source = "./examples/with-failure-notifications"
+  }
+
+  assert {
+    condition     = module.dbt_runner.failure_notification_topic == "projects/fake-project/topics/dbt-failures"
+    error_message = "failure_notification_topic output should match input"
+  }
+
+  assert {
+    condition     = module.dbt_runner.failure_notification_trigger_id != null
+    error_message = "Sink ID should be set when failure_notification_topic is configured"
+  }
+}

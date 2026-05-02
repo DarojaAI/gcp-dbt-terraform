@@ -52,6 +52,16 @@ output "artifacts_bucket_url" {
   value       = local.artifacts_enabled ? google_storage_bucket.artifacts[0].url : null
 }
 
+output "failure_notification_topic" {
+  description = "Pub/Sub topic that receives Cloud Run Job failure events (null if disabled)."
+  value       = var.failure_notification_topic
+}
+
+output "failure_notification_trigger_id" {
+  description = "Name of the resource wiring failures to the Pub/Sub topic (null if disabled). Despite the historical name, this is now a google_logging_project_sink."
+  value       = local.failure_notifications_enabled ? google_logging_project_sink.job_failure[0].name : null
+}
+
 # GitHub Actions command to execute the job
 output "github_actions_execute_command" {
   description = "GitHub Actions command to execute the dbt job"

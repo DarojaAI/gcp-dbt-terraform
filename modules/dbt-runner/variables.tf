@@ -235,3 +235,18 @@ variable "artifacts_bucket_location" {
   type        = string
   default     = null
 }
+
+# =============================================================================
+# Failure Notifications — optional
+# =============================================================================
+
+variable "failure_notification_topic" {
+  description = "Optional fully-qualified Pub/Sub topic (projects/PROJECT/topics/NAME) to receive Cloud Run Job execution-failure events via a log-based sink. The topic must already exist; this module only wires the sink. Leave null to disable."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.failure_notification_topic == null || can(regex("^projects/[^/]+/topics/[^/]+$", coalesce(var.failure_notification_topic, "projects/x/topics/x")))
+    error_message = "failure_notification_topic must be in the form 'projects/PROJECT/topics/NAME'."
+  }
+}

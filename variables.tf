@@ -225,3 +225,13 @@ variable "artifacts_bucket_location" {
   type        = string
   default     = null
 }
+
+# =============================================================================
+# Failure Notifications (pass-through)
+# =============================================================================
+
+variable "failure_notification_topic" {
+  description = "Optional Pub/Sub topic to receive Cloud Run Job failure events. Leave null to disable."
+  type        = string
+  default     = null
+}

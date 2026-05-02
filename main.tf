@@ -61,6 +61,9 @@ module "dbt_runner" {
   # Artifacts bucket
   artifacts_bucket_name     = var.artifacts_bucket_name
   artifacts_bucket_location = var.artifacts_bucket_location
+
+  # Failure notifications
+  failure_notification_topic = var.failure_notification_topic
 }
 
 # =============================================================================
@@ -110,4 +113,14 @@ output "artifacts_bucket_name" {
 output "artifacts_bucket_url" {
   description = "gs:// URL of the dbt artifacts bucket (null if disabled)."
   value       = module.dbt_runner.artifacts_bucket_url
+}
+
+output "failure_notification_topic" {
+  description = "Pub/Sub topic for Cloud Run Job failure events (null if disabled)."
+  value       = module.dbt_runner.failure_notification_topic
+}
+
+output "failure_notification_trigger_id" {
+  description = "ID of the failure-notification sink (null if disabled)."
+  value       = module.dbt_runner.failure_notification_trigger_id
 }

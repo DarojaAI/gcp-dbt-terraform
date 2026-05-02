@@ -218,3 +218,36 @@ resource "google_storage_bucket_iam_member" "dbt_artifacts_writer" {
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.dbt_runner.email}"
 }
+
+# =============================================================================
+# Failure Notifications — optional log-based Pub/Sub sink for Cloud Run Job errors
+# =============================================================================
+
+locals {
+  failure_notifications_enabled = var.failure_notification_topic != null
+}
+
+resource "google_logging_project_sink" "job_failure" {
+  count = local.failure_notifications_enabled ? 1 : 0
+
+  project     = var.project_id
+  name        = "${var.repo_prefix}-${var.environment}-dbt-failure-sink"
+  destination = "pubsub.googleapis.com/${var.failure_notification_topic}"
+
+  filter = join(" AND ", [
+    "resource.type=\"cloud_run_job\"",
+    "resource.labels.job_name=\"${google_cloud_run_v2_job.dbt.name}\"",
+    "severity>=ERROR",
+  ])
+
+  unique_writer_identity = true
+}
+
+resource "google_pubsub_topic_iam_member" "log_sink_publisher" {
+  count = local.failure_notifications_enabled ? 1 : 0
+
+  project = var.project_id
+  topic   = element(split("/", var.failure_notification_topic), 3)
+  role    = "roles/pubsub.publisher"
+  member  = google_logging_project_sink.job_failure[0].writer_identity
+}
