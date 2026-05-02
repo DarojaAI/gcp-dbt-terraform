@@ -106,9 +106,17 @@ variable "dbt_target" {
 }
 
 variable "dbt_command" {
-  description = "dbt command to run (e.g., 'run', 'test', 'run && test')"
+  description = "dbt command to run (e.g., 'run', 'test', 'run && test'). Note: shell operators like '&&' are NOT supported in Cloud Run env vars - the command must be a single dbt subcommand without chaining."
   type        = string
-  default     = "run --vars '{\"dbt_schema_prefix\": \"rag\"}' && test --target prod"
+  default     = "run --target prod"
+  validation {
+    condition     = !can(regex("(&&|;|\\|)", var.dbt_command))
+    error_message = "Shell operators (&&, ;, |) are not supported in dbt_command. Cloud Run passes env vars as single arguments, not through a shell. Use a single dbt subcommand (e.g., 'run --target prod') or set DBT_COMMAND via a shell wrapper script in the container."
+  }
+  validation {
+    condition     = !can(regex("--vars.*'.*'.*'", var.dbt_command))
+    error_message = "JSON in --vars (e.g., --vars '{\"key\": \"value\"}') is not supported in dbt_command env var. JSON gets corrupted by shell escaping. Pass vars via separate environment variables (DBT_VARS) or hardcode them in dbt_project.yml."
+  }
 }
 
 # =============================================================================
