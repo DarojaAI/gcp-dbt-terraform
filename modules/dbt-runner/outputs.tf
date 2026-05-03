@@ -27,6 +27,46 @@ output "service_account_id" {
   value       = google_service_account.dbt_runner.unique_id
 }
 
+output "container_env_names" {
+  description = "Names of all env vars set on the dbt container — used by terraform test to verify pass-through."
+  value       = [for e in google_cloud_run_v2_job.dbt.template[0].template[0].containers[0].env : e.name]
+}
+
+output "max_retries" {
+  description = "Resolved max_retries on the Cloud Run Job — used by terraform test."
+  value       = google_cloud_run_v2_job.dbt.template[0].template[0].max_retries
+}
+
+output "parallelism" {
+  description = "Resolved parallelism on the Cloud Run Job — used by terraform test."
+  value       = google_cloud_run_v2_job.dbt.template[0].parallelism
+}
+
+output "artifacts_bucket_name" {
+  description = "GCS bucket name for dbt artifacts (null if disabled)."
+  value       = local.artifacts_enabled ? google_storage_bucket.artifacts[0].name : null
+}
+
+output "artifacts_bucket_url" {
+  description = "gs:// URL of the dbt artifacts bucket (null if disabled)."
+  value       = local.artifacts_enabled ? google_storage_bucket.artifacts[0].url : null
+}
+
+output "artifacts_access_logs_bucket_name" {
+  description = "GCS bucket name receiving access logs for the artifacts bucket (null if disabled). Logs retained 90 days."
+  value       = local.artifacts_enabled ? google_storage_bucket.artifacts_access_logs[0].name : null
+}
+
+output "failure_notification_topic" {
+  description = "Pub/Sub topic that receives Cloud Run Job failure events (null if disabled)."
+  value       = var.failure_notification_topic
+}
+
+output "failure_notification_trigger_id" {
+  description = "Name of the resource wiring failures to the Pub/Sub topic (null if disabled). Despite the historical name, this is now a google_logging_project_sink."
+  value       = local.failure_notifications_enabled ? google_logging_project_sink.job_failure[0].name : null
+}
+
 # GitHub Actions command to execute the job
 output "github_actions_execute_command" {
   description = "GitHub Actions command to execute the dbt job"

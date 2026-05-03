@@ -9,7 +9,7 @@ resource "google_cloud_run_v2_job" "dbt" {
   labels   = var.labels
 
   template {
-    parallelism = 1
+    parallelism = var.job_parallelism
     task_count  = var.job_task_count
 
     template {
@@ -54,6 +54,23 @@ resource "google_cloud_run_v2_job" "dbt" {
           value = var.dbt_command
         }
 
+        # Caller-supplied plain env vars (validated to not collide with reserved keys)
+        dynamic "env" {
+          for_each = var.dbt_env_vars
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.artifacts_enabled ? [1] : []
+          content {
+            name  = "DBT_ARTIFACTS_BUCKET"
+            value = google_storage_bucket.artifacts[0].name
+          }
+        }
+
         # Database password from Secret Manager (never hardcoded)
         env {
           name = "POSTGRES_PASSWORD"
@@ -86,7 +103,7 @@ resource "google_cloud_run_v2_job" "dbt" {
         egress = "PRIVATE_RANGES_ONLY"
       }
 
-      max_retries = 0
+      max_retries = var.job_max_retries
     }
   }
 }
@@ -156,4 +173,132 @@ resource "null_resource" "smoke_probe" {
   provisioner "local-exec" {
     command = "gcloud run jobs describe ${google_cloud_run_v2_job.dbt.name} --region=${google_cloud_run_v2_job.dbt.location} --project=${var.project_id} --format=value(name)"
   }
+}
+
+# =============================================================================
+# dbt Artifacts Bucket — optional, created only when artifacts_bucket_name set
+# =============================================================================
+
+locals {
+  artifacts_enabled = var.artifacts_bucket_name != null
+}
+
+resource "google_storage_bucket" "artifacts_access_logs" {
+  # checkov:skip=CKV_GCP_62: This is itself an access-log bucket; logging its own access would loop.
+  count = local.artifacts_enabled ? 1 : 0
+
+  project       = var.project_id
+  name          = "${var.artifacts_bucket_name}-access-logs"
+  location      = coalesce(var.artifacts_bucket_location, var.region)
+  force_destroy = false
+  labels        = var.labels
+
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 90
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age        = 30
+      with_state = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_member" "artifacts_access_log_writer" {
+  count = local.artifacts_enabled ? 1 : 0
+
+  bucket = google_storage_bucket.artifacts_access_logs[0].name
+  role   = "roles/storage.legacyBucketWriter"
+  member = "group:cloud-storage-analytics@google.com"
+}
+
+resource "google_storage_bucket" "artifacts" {
+  count = local.artifacts_enabled ? 1 : 0
+
+  project  = var.project_id
+  name     = var.artifacts_bucket_name
+  location = coalesce(var.artifacts_bucket_location, var.region)
+  # Intentional: artifacts are historical and shouldn't vanish on a destroy.
+  # Operator must empty the bucket manually to tear down.
+  force_destroy = false
+  labels        = var.labels
+
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
+  versioning {
+    enabled = true
+  }
+
+  logging {
+    log_bucket        = google_storage_bucket.artifacts_access_logs[0].name
+    log_object_prefix = "artifacts-access"
+  }
+
+  lifecycle_rule {
+    condition {
+      age        = 90
+      with_state = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_member" "dbt_artifacts_writer" {
+  count = local.artifacts_enabled ? 1 : 0
+
+  bucket = google_storage_bucket.artifacts[0].name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.dbt_runner.email}"
+}
+
+# =============================================================================
+# Failure Notifications — optional log-based Pub/Sub sink for Cloud Run Job errors
+# =============================================================================
+
+locals {
+  failure_notifications_enabled = var.failure_notification_topic != null
+}
+
+resource "google_logging_project_sink" "job_failure" {
+  count = local.failure_notifications_enabled ? 1 : 0
+
+  project     = var.project_id
+  name        = "${var.repo_prefix}-${var.environment}-dbt-failure-sink"
+  destination = "pubsub.googleapis.com/${var.failure_notification_topic}"
+
+  filter = join(" AND ", [
+    "resource.type=\"cloud_run_job\"",
+    "resource.labels.job_name=\"${google_cloud_run_v2_job.dbt.name}\"",
+    "severity>=ERROR",
+  ])
+
+  unique_writer_identity = true
+}
+
+resource "google_pubsub_topic_iam_member" "log_sink_publisher" {
+  count = local.failure_notifications_enabled ? 1 : 0
+
+  project = var.project_id
+  topic   = element(split("/", var.failure_notification_topic), 3)
+  role    = "roles/pubsub.publisher"
+  member  = google_logging_project_sink.job_failure[0].writer_identity
 }

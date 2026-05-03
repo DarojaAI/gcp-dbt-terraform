@@ -93,12 +93,6 @@ variable "dbt_image_uri" {
 # dbt Configuration
 # =============================================================================
 
-variable "dbt_schema_prefix" {
-  description = "dbt schema prefix variable"
-  type        = string
-  default     = "rag"
-}
-
 variable "dbt_target" {
   description = "dbt target profile to use"
   type        = string
@@ -106,9 +100,17 @@ variable "dbt_target" {
 }
 
 variable "dbt_command" {
-  description = "dbt command to run (e.g., 'run', 'test', 'run && test')"
+  description = "dbt command to run (e.g., 'run', 'test', 'run && test'). Note: shell operators like '&&' are NOT supported in Cloud Run env vars - the command must be a single dbt subcommand without chaining."
   type        = string
-  default     = "run --vars '{\"dbt_schema_prefix\": \"rag\"}' && test --target prod"
+  default     = "run --target prod"
+  validation {
+    condition     = !can(regex("(&&|;|\\|)", var.dbt_command))
+    error_message = "Shell operators (&&, ;, |) are not supported in dbt_command. Cloud Run passes env vars as single arguments, not through a shell. Use a single dbt subcommand (e.g., 'run --target prod') or set DBT_COMMAND via a shell wrapper script in the container."
+  }
+  validation {
+    condition     = !can(regex("--vars.*'.*'.*'", var.dbt_command))
+    error_message = "JSON in --vars (e.g., --vars '{\"key\": \"value\"}') is not supported in dbt_command env var. JSON gets corrupted by shell escaping. Pass vars via separate environment variables (DBT_VARS) or hardcode them in dbt_project.yml."
+  }
 }
 
 # =============================================================================
@@ -135,6 +137,18 @@ variable "job_memory" {
 
 variable "job_task_count" {
   description = "Number of parallel tasks"
+  type        = number
+  default     = 1
+}
+
+variable "job_max_retries" {
+  description = "Number of retries for a failed Cloud Run Job task. Default 0 (no retries)."
+  type        = number
+  default     = 0
+}
+
+variable "job_parallelism" {
+  description = "Number of tasks that may run in parallel. Must be <= job_task_count."
   type        = number
   default     = 1
 }
@@ -170,4 +184,48 @@ variable "run_smoke_test" {
   description = "Run `gcloud run jobs describe` after creation to verify the job is queryable. Requires gcloud on the apply runner. Default false."
   type        = bool
   default     = false
+}
+
+# =============================================================================
+# Custom Environment Variables (pass-through)
+# =============================================================================
+
+variable "dbt_env_vars" {
+  description = "Additional plain (non-secret) env vars to set on the dbt container. Reserved keys (POSTGRES_*, REPO_PREFIX, DBT_TARGET, DBT_COMMAND) cannot be overridden."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition = length([
+      for k in keys(var.dbt_env_vars) :
+      k if can(regex("^(POSTGRES_.*|REPO_PREFIX|DBT_TARGET|DBT_COMMAND)$", k))
+    ]) == 0
+    error_message = "dbt_env_vars cannot override reserved keys: POSTGRES_*, REPO_PREFIX, DBT_TARGET, DBT_COMMAND. Use the dedicated variables for those."
+  }
+}
+
+# =============================================================================
+# dbt Artifacts (manifest.json, catalog.json) — optional
+# =============================================================================
+
+variable "artifacts_bucket_name" {
+  description = "Optional GCS bucket for dbt artifacts. Leave null to disable."
+  type        = string
+  default     = null
+}
+
+variable "artifacts_bucket_location" {
+  description = "Location for the artifacts bucket. Defaults to var.region."
+  type        = string
+  default     = null
+}
+
+# =============================================================================
+# Failure Notifications (pass-through)
+# =============================================================================
+
+variable "failure_notification_topic" {
+  description = "Optional Pub/Sub topic to receive Cloud Run Job failure events. Leave null to disable."
+  type        = string
+  default     = null
 }

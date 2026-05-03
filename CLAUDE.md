@@ -57,9 +57,9 @@ tflint --init --config=.tflint.hcl       # one-time per machine
 tflint --config=.tflint.hcl              # google ruleset, version pinned in .tflint.hcl
 ```
 
-A pre-commit config exists (`.pre-commit-config.yaml`) wiring up `terraform_fmt`, `terraform_validate`, `terraform_docs`, `checkov`, `gitleaks`, `yamllint`, and `shellcheck`. Run `pre-commit install` once, then `pre-commit run --all-files` to execute everything locally.
+A pre-commit config exists (`.pre-commit-config.yaml`) wiring up `terraform_fmt` and `terraform_validate`. Run `pre-commit install` once, then `pre-commit run --all-files` to execute everything locally.
 
-Note: the checkov hook is configured with `--directory terraform/` which **does not exist in this repo** — that path is a leftover from a different layout. `terraform validate` and `tflint` are the load-bearing checks; checkov is currently a no-op here.
+Checkov and gitleaks run in GitHub Actions (`.github/workflows/security.yml`) rather than as pre-commit hooks. `terraform validate`, `tflint`, and checkov together are the load-bearing checks.
 
 ### Validating the Docker image (run from the *calling* project)
 ```bash
@@ -100,5 +100,5 @@ When adding a feature: prefer adding a `terraform test` assertion over adding to
 - **Header comment style**: every `.tf` file opens with a `# ===` banner naming the file's purpose. New files should follow.
 - **Section banners inside files**: variables and resources are grouped by `# ===` sections (Database Configuration, VPC Configuration, IAM, etc.). Keep new additions inside the matching section.
 - **No `terraform.tfvars` in repo**: `.gitignore` excludes `*.tfvars` except `*.tfvars.example` — don't commit values.
-- **Defaults are RAG-flavored**: `postgres_db = "rag_taxonomy"`, `postgres_user = "rag_admin"`, `dbt_schema_prefix = "rag"`, `repo_prefix = "rag-research"`. These are project defaults, not generic Terraform conventions — when reviewing PRs that touch defaults, check whether the change is intentional or accidental.
+- **Defaults are RAG-flavored**: `postgres_db = "rag_taxonomy"`, `postgres_user = "rag_admin"`, `repo_prefix = "rag-research"`. These are project defaults, not generic Terraform conventions — when reviewing PRs that touch defaults, check whether the change is intentional or accidental.
 - **Min Terraform / provider versions**: `>= 1.6` and google `~> 7.0`. `VERSIONS.md` is the source of truth for compatibility claims; update it when bumping.

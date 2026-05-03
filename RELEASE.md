@@ -6,6 +6,8 @@ This repository uses automated releases triggered by VERSION file changes.
 
 ### How It Works
 
+0. **Update `CHANGELOG.md`**: rename the `[Unreleased]` section heading to the new `[X.Y.Z]` version, and add a fresh empty `[Unreleased]` section above it. Verify all bullets accurately describe what shipped — `git log <prev-tag>..HEAD --oneline` is the source of truth.
+
 1. **Update VERSION file on main**
    ```bash
    echo "1.1.0" > VERSION

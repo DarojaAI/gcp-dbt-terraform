@@ -1,5 +1,9 @@
 # dbt-runner Module
 
+> **Note:** This module is in the process of being renamed from `gcp-dbt-terraform`
+> to `terraform-google-dbt-runner` for Terraform Registry compatibility. Until the
+> rename ships, use `github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner` in source URLs.
+
 Terraform module for Cloud Run Job-based dbt execution with VPC access to private databases.
 
 ## Overview
@@ -35,7 +39,6 @@ This module creates a Cloud Run Job that executes dbt (data build tool) with dir
 | `network_id` | string | — | VPC network resource ID |
 | `subnetwork_id` | string | — | VPC subnetwork resource ID |
 | `dbt_image_uri` | string | — | Docker image URI (e.g., gcr.io/project/dbt:latest) |
-| `dbt_schema_prefix` | string | `rag` | dbt schema prefix |
 | `dbt_target` | string | `prod` | dbt target profile |
 | `job_timeout_seconds` | number | `1800` | Job timeout (30 minutes) |
 | `job_cpu` | string | `2` | CPU allocation |
@@ -59,7 +62,7 @@ This module creates a Cloud Run Job that executes dbt (data build tool) with dir
 
 ```hcl
 module "dbt_runner" {
-  source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
+  source  = "github.com/DarojaAI/terraform-google-dbt-runner//modules/dbt-runner?ref=v1.1.0"
 
   project_id              = "my-project"
   environment             = "eai"
@@ -88,7 +91,7 @@ module "postgres" {
 }
 
 module "dbt_runner" {
-  source = "github.com/DarojaAI/gcp-dbt-terraform//modules/dbt-runner"
+  source  = "github.com/DarojaAI/terraform-google-dbt-runner//modules/dbt-runner?ref=v1.1.0"
 
   project_id              = "my-project"
   environment             = "eai"

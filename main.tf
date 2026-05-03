@@ -34,9 +34,8 @@ module "dbt_runner" {
   dbt_image_uri = var.dbt_image_uri
 
   # dbt Configuration
-  dbt_schema_prefix = var.dbt_schema_prefix
-  dbt_target        = var.dbt_target
-  dbt_command       = var.dbt_command
+  dbt_target  = var.dbt_target
+  dbt_command = var.dbt_command
 
   # GitHub Actions WIF
   wif_service_account = var.wif_service_account
@@ -46,12 +45,24 @@ module "dbt_runner" {
   job_cpu             = var.job_cpu
   job_memory          = var.job_memory
   job_task_count      = var.job_task_count
+  job_max_retries     = var.job_max_retries
+  job_parallelism     = var.job_parallelism
 
   # Labels
   labels = var.labels
 
   # Smoke Test
   run_smoke_test = var.run_smoke_test
+
+  # Custom env vars
+  dbt_env_vars = var.dbt_env_vars
+
+  # Artifacts bucket
+  artifacts_bucket_name     = var.artifacts_bucket_name
+  artifacts_bucket_location = var.artifacts_bucket_location
+
+  # Failure notifications
+  failure_notification_topic = var.failure_notification_topic
 }
 
 # =============================================================================
@@ -76,4 +87,44 @@ output "job_id" {
 output "service_account_email" {
   description = "Service account email for dbt Cloud Run Job"
   value       = module.dbt_runner.service_account_email
+}
+
+output "container_env_names" {
+  description = "Names of all env vars set on the dbt container."
+  value       = module.dbt_runner.container_env_names
+}
+
+output "max_retries" {
+  description = "Resolved max_retries on the Cloud Run Job."
+  value       = module.dbt_runner.max_retries
+}
+
+output "parallelism" {
+  description = "Resolved parallelism on the Cloud Run Job."
+  value       = module.dbt_runner.parallelism
+}
+
+output "artifacts_bucket_name" {
+  description = "GCS bucket name for dbt artifacts (null if disabled)."
+  value       = module.dbt_runner.artifacts_bucket_name
+}
+
+output "artifacts_bucket_url" {
+  description = "gs:// URL of the dbt artifacts bucket (null if disabled)."
+  value       = module.dbt_runner.artifacts_bucket_url
+}
+
+output "artifacts_access_logs_bucket_name" {
+  description = "GCS bucket name receiving access logs for the artifacts bucket (null if disabled)."
+  value       = module.dbt_runner.artifacts_access_logs_bucket_name
+}
+
+output "failure_notification_topic" {
+  description = "Pub/Sub topic for Cloud Run Job failure events (null if disabled)."
+  value       = module.dbt_runner.failure_notification_topic
+}
+
+output "failure_notification_trigger_id" {
+  description = "ID of the failure-notification sink (null if disabled)."
+  value       = module.dbt_runner.failure_notification_trigger_id
 }

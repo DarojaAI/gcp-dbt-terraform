@@ -28,4 +28,134 @@ run "basic_plan_composes" {
     condition     = can(regex("^rag-research-ci-dbt-runner@", module.dbt_runner.service_account_email))
     error_message = "service_account_email should start with rag-research-ci-dbt-runner@"
   }
+
+  # Defaults: max_retries = 0 (matches current hardcoded behavior)
+  assert {
+    condition     = module.dbt_runner.max_retries == 0
+    error_message = "max_retries default must remain 0 (no behavior change)"
+  }
+
+  # Defaults: parallelism = 1
+  assert {
+    condition     = module.dbt_runner.parallelism == 1
+    error_message = "parallelism default must remain 1 (no behavior change)"
+  }
+}
+
+run "rejects_reserved_postgres_env_var" {
+  command = plan
+
+  # Test at the root module level so expect_failures can reference var.dbt_env_vars
+  # (which now carries the same validation block as the nested module variable).
+  variables {
+    project_id               = "fake-project"
+    environment              = "ci"
+    network_id               = "projects/fake-project/global/networks/fake-vpc"
+    subnetwork_id            = "projects/fake-project/regions/us-central1/subnetworks/fake-subnet"
+    postgres_host            = "10.0.0.2"
+    postgres_password_secret = "projects/000000000000/secrets/fake-postgres-password/versions/latest"
+    dbt_image_uri            = "gcr.io/fake-project/dbt:latest"
+    wif_service_account      = "github-actions@fake-project.iam.gserviceaccount.com"
+    dbt_env_vars             = { POSTGRES_HOST = "10.0.0.99" }
+  }
+
+  expect_failures = [var.dbt_env_vars]
+}
+
+run "rejects_reserved_dbt_target_env_var" {
+  command = plan
+
+  variables {
+    project_id               = "fake-project"
+    environment              = "ci"
+    network_id               = "projects/fake-project/global/networks/fake-vpc"
+    subnetwork_id            = "projects/fake-project/regions/us-central1/subnetworks/fake-subnet"
+    postgres_host            = "10.0.0.2"
+    postgres_password_secret = "projects/000000000000/secrets/fake-postgres-password/versions/latest"
+    dbt_image_uri            = "gcr.io/fake-project/dbt:latest"
+    wif_service_account      = "github-actions@fake-project.iam.gserviceaccount.com"
+    dbt_env_vars             = { DBT_TARGET = "dev" }
+  }
+
+  expect_failures = [var.dbt_env_vars]
+}
+
+run "with_env_vars_plan" {
+  command = plan
+
+  module {
+    source = "./examples/with-env-vars"
+  }
+
+  # Custom env vars must reach the container
+  assert {
+    condition = anytrue([
+      for e in module.dbt_runner.container_env_names :
+      e == "DBT_VARS"
+    ])
+    error_message = "DBT_VARS env var should be present on the dbt container"
+  }
+
+  assert {
+    condition = anytrue([
+      for e in module.dbt_runner.container_env_names :
+      e == "ELEMENTARY_PROFILE"
+    ])
+    error_message = "ELEMENTARY_PROFILE env var should be present on the dbt container"
+  }
+}
+
+run "with_artifacts_bucket_plan" {
+  command = plan
+
+  module {
+    source = "./examples/with-artifacts-bucket"
+  }
+
+  # Bucket name is propagated to output
+  assert {
+    condition     = module.dbt_runner.artifacts_bucket_name == "fake-rag-research-ci-dbt-artifacts"
+    error_message = "artifacts_bucket_name should match the input"
+  }
+
+  # Container env exposes the bucket so dbt can write to it
+  assert {
+    condition = anytrue([
+      for e in module.dbt_runner.container_env_names :
+      e == "DBT_ARTIFACTS_BUCKET"
+    ])
+    error_message = "DBT_ARTIFACTS_BUCKET env var should be present when artifacts_bucket_name is set"
+  }
+}
+
+run "no_artifacts_bucket_default" {
+  command = plan
+
+  module {
+    source = "./examples/basic"
+  }
+
+  # When unset, output is null
+  assert {
+    condition     = module.dbt_runner.artifacts_bucket_name == null
+    error_message = "artifacts_bucket_name should be null when no bucket is configured"
+  }
+}
+
+run "with_failure_notifications_plan" {
+  command = plan
+
+  module {
+    source = "./examples/with-failure-notifications"
+  }
+
+  assert {
+    condition     = module.dbt_runner.failure_notification_topic == "projects/fake-project/topics/dbt-failures"
+    error_message = "failure_notification_topic output should match input"
+  }
+
+  assert {
+    condition     = module.dbt_runner.failure_notification_trigger_id != null
+    error_message = "Sink ID should be set when failure_notification_topic is configured"
+  }
 }
