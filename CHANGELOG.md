@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v2.0.0...v2.0.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* expose deletion_protection variable to allow terraform-managed destroy ([#12](https://github.com/DarojaAI/gcp-dbt-terraform/issues/12)) ([4be8cf6](https://github.com/DarojaAI/gcp-dbt-terraform/commit/4be8cf69bce267fe058573d56b49ea3b1ac5a4e3))
+
 ## [2.0.0](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v1.1.0...v2.0.0) (2026-05-03)
 
 
