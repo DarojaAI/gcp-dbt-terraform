@@ -34,9 +34,8 @@ module "dbt_runner" {
   dbt_image_uri = var.dbt_image_uri
 
   # dbt Configuration
-  dbt_schema_prefix = var.dbt_schema_prefix
-  dbt_target        = var.dbt_target
-  dbt_command       = var.dbt_command
+  dbt_target  = var.dbt_target
+  dbt_command = var.dbt_command
 
   # GitHub Actions WIF
   wif_service_account = var.wif_service_account

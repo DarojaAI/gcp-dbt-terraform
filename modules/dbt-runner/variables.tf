@@ -93,12 +93,6 @@ variable "dbt_image_uri" {
 # dbt Configuration
 # =============================================================================
 
-variable "dbt_schema_prefix" {
-  description = "dbt schema prefix variable"
-  type        = string
-  default     = "rag"
-}
-
 variable "dbt_target" {
   description = "dbt target profile to use"
   type        = string
