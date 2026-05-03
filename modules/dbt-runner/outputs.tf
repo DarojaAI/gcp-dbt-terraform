@@ -52,6 +52,11 @@ output "artifacts_bucket_url" {
   value       = local.artifacts_enabled ? google_storage_bucket.artifacts[0].url : null
 }
 
+output "artifacts_access_logs_bucket_name" {
+  description = "GCS bucket name receiving access logs for the artifacts bucket (null if disabled). Logs retained 90 days."
+  value       = local.artifacts_enabled ? google_storage_bucket.artifacts_access_logs[0].name : null
+}
+
 output "failure_notification_topic" {
   description = "Pub/Sub topic that receives Cloud Run Job failure events (null if disabled)."
   value       = var.failure_notification_topic

@@ -114,6 +114,11 @@ output "artifacts_bucket_url" {
   value       = module.dbt_runner.artifacts_bucket_url
 }
 
+output "artifacts_access_logs_bucket_name" {
+  description = "GCS bucket name receiving access logs for the artifacts bucket (null if disabled)."
+  value       = module.dbt_runner.artifacts_access_logs_bucket_name
+}
+
 output "failure_notification_topic" {
   description = "Pub/Sub topic for Cloud Run Job failure events (null if disabled)."
   value       = module.dbt_runner.failure_notification_topic

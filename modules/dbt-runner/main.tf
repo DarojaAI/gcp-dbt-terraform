@@ -183,8 +183,38 @@ locals {
   artifacts_enabled = var.artifacts_bucket_name != null
 }
 
+resource "google_storage_bucket" "artifacts_access_logs" {
+  # checkov:skip=CKV_GCP_62: This is itself an access-log bucket; logging its own access would loop.
+  count = local.artifacts_enabled ? 1 : 0
+
+  project       = var.project_id
+  name          = "${var.artifacts_bucket_name}-access-logs"
+  location      = coalesce(var.artifacts_bucket_location, var.region)
+  force_destroy = false
+  labels        = var.labels
+
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
+  lifecycle_rule {
+    condition {
+      age = 90
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_member" "artifacts_access_log_writer" {
+  count = local.artifacts_enabled ? 1 : 0
+
+  bucket = google_storage_bucket.artifacts_access_logs[0].name
+  role   = "roles/storage.legacyBucketWriter"
+  member = "group:cloud-storage-analytics@google.com"
+}
+
 resource "google_storage_bucket" "artifacts" {
-  # checkov:skip=CKV_GCP_62: Access logging would require a second bucket; not justified for an internal artifacts archive only writable by the dbt SA.
   count = local.artifacts_enabled ? 1 : 0
 
   project  = var.project_id
@@ -200,6 +230,11 @@ resource "google_storage_bucket" "artifacts" {
 
   versioning {
     enabled = true
+  }
+
+  logging {
+    log_bucket        = google_storage_bucket.artifacts_access_logs[0].name
+    log_object_prefix = "artifacts-access"
   }
 
   lifecycle_rule {
