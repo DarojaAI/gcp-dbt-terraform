@@ -3,10 +3,11 @@
 # =============================================================================
 
 resource "google_cloud_run_v2_job" "dbt" {
-  project  = var.project_id
-  name     = "${var.repo_prefix}-${var.environment}-dbt"
-  location = var.region
-  labels   = var.labels
+  project             = var.project_id
+  name                = "${var.repo_prefix}-${var.environment}-dbt"
+  location            = var.region
+  labels              = var.labels
+  deletion_protection = var.deletion_protection
 
   template {
     parallelism = var.job_parallelism
