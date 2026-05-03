@@ -184,6 +184,7 @@ locals {
 }
 
 resource "google_storage_bucket" "artifacts" {
+  # checkov:skip=CKV_GCP_62: Access logging would require a second bucket; not justified for an internal artifacts archive only writable by the dbt SA.
   count = local.artifacts_enabled ? 1 : 0
 
   project  = var.project_id
@@ -195,6 +196,7 @@ resource "google_storage_bucket" "artifacts" {
   labels        = var.labels
 
   uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
 
   versioning {
     enabled = true
