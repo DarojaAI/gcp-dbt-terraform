@@ -117,6 +117,12 @@ variable "dbt_command" {
 # Cloud Run Job Configuration
 # =============================================================================
 
+variable "deletion_protection" {
+  description = "When true, prevents terraform from destroying the Cloud Run Job. Set to false to allow destroy/replace operations. Default true (GCP provider 7.x default)."
+  type        = bool
+  default     = true
+}
+
 variable "job_timeout_seconds" {
   description = "Cloud Run Job timeout in seconds"
   type        = number

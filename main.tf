@@ -41,6 +41,7 @@ module "dbt_runner" {
   wif_service_account = var.wif_service_account
 
   # Cloud Run Job Configuration
+  deletion_protection = var.deletion_protection
   job_timeout_seconds = var.job_timeout_seconds
   job_cpu             = var.job_cpu
   job_memory          = var.job_memory
