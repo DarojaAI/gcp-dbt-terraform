@@ -55,6 +55,11 @@ RUN if [ -f ./dbt/requirements.txt ]; then \
     pip install --no-cache-dir -r ./dbt/requirements.txt; \
     fi
 
+# Install dbt packages (from packages.yml if present)
+RUN if [ -f ./dbt/packages.yml ]; then \
+    cd ./dbt && dbt deps --project-dir ./dbt; \
+    fi
+
 # Set working directory for dbt execution
 WORKDIR /app/dbt
 
