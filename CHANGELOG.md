@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v2.0.1...v2.1.0) (2026-05-05)
+
+
+### Features
+
+* add dbt profiles.yml template with optimized connection pooling defaults ([#15](https://github.com/DarojaAI/gcp-dbt-terraform/issues/15)) ([7c4f29e](https://github.com/DarojaAI/gcp-dbt-terraform/commit/7c4f29e465ba638a66ff9559725b1ad8a68e60c5))
+
 ## [2.0.1](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v2.0.0...v2.0.1) (2026-05-03)
 
 
