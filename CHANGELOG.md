@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.0](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v2.1.0...v3.0.0) (2026-05-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Consumers must now set var.postgres_db and var.postgres_user explicitly. The rag_research_tool consumer (the original source of these defaults) already sets both via module.postgres outputs, so its deploy is unaffected.
+
+### Features
+
+* remove project-specific defaults for postgres_db and postgres_user ([#24](https://github.com/DarojaAI/gcp-dbt-terraform/issues/24)) ([13c2d26](https://github.com/DarojaAI/gcp-dbt-terraform/commit/13c2d26edf7c2c1a8d94f02d1f3adfc0a84eedcf))
+
+
+### Bug Fixes
+
+* add dbt deps to Dockerfile to install packages from packages.yml ([#18](https://github.com/DarojaAI/gcp-dbt-terraform/issues/18)) ([a8b7497](https://github.com/DarojaAI/gcp-dbt-terraform/commit/a8b7497a5555cd1aff730e00f310a34a581bc1fd))
+* **ci:** discover terraform tests from repo root ([#21](https://github.com/DarojaAI/gcp-dbt-terraform/issues/21)) ([45ac939](https://github.com/DarojaAI/gcp-dbt-terraform/commit/45ac9398846c8a748247876075cfc2ec81332ace))
+
 ## [2.1.0](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v2.0.1...v2.1.0) (2026-05-05)
 
 
