@@ -66,9 +66,15 @@ See [VERSIONS.md](./VERSIONS.md) for the full compatibility matrix.
 
 ## Releasing
 
-See [RELEASE.md](./RELEASE.md). Briefly: edit the `VERSION` file on `main`,
-push, and the `release.yml` workflow tags `vX.Y.Z` and creates a GitHub
-Release.
+This module uses [release-please](https://github.com/googleapis/release-please)
+driven by [Conventional Commits](https://www.conventionalcommits.org/).
+
+- Land conventional commits (`feat:`, `fix:`, `feat!:`, `refactor!:`) on `main`.
+- The `Release Please` workflow opens a release PR that bumps the version,
+  updates `CHANGELOG.md`, and updates `.release-please-manifest.json`.
+- Merging the release PR creates the `vX.Y.Z` tag and the GitHub Release.
+
+Consumers pin tags directly: `source = "github.com/DarojaAI/gcp-dbt-terraform?ref=vX.Y.Z"`.
 
 ## License
 

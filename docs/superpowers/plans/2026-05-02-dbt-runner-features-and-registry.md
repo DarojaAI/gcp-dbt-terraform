@@ -1005,7 +1005,7 @@ git commit -m "feat: optional log-based Pub/Sub sink for Cloud Run Job failures"
 - LICENSE MUST be present (already done — Apache 2.0).
 - Each nested module under `modules/` with a README is treated as externally usable; the existing `modules/dbt-runner/README.md` is fine, but its `source = ` examples MUST point at external addresses, not relative paths (https://developer.hashicorp.com/terraform/language/modules/develop/structure).
 - Each example under `examples/` SHOULD have a README — Tasks 1, 3, 4 already added these; verify `examples/basic/README.md` exists.
-- Tags MUST be semantic versions (`vX.Y.Z`). Current `release.yml` already does this — leave it.
+- Tags MUST be semantic versions (`vX.Y.Z`). Releases are handled by release-please from conventional commits on `main` — leave it.
 
 **Files:**
 - Modify: `README.md` (root) — full rewrite
@@ -1097,9 +1097,15 @@ See [VERSIONS.md](./VERSIONS.md) for the full compatibility matrix.
 
 ## Releasing
 
-See [RELEASE.md](./RELEASE.md). Briefly: edit the `VERSION` file on `main`,
-push, and the `release.yml` workflow tags `vX.Y.Z` and creates a GitHub
-Release.
+This module uses [release-please](https://github.com/googleapis/release-please)
+driven by [Conventional Commits](https://www.conventionalcommits.org/).
+
+- Land conventional commits (`feat:`, `fix:`, `feat!:`, `refactor!:`) on `main`.
+- The `Release Please` workflow opens a release PR that bumps the version,
+  updates `CHANGELOG.md`, and updates `.release-please-manifest.json`.
+- Merging the release PR creates the `vX.Y.Z` tag and the GitHub Release.
+
+Consumers pin tags directly: `source = "github.com/DarojaAI/gcp-dbt-terraform?ref=vX.Y.Z"`.
 
 ## License
 
@@ -1218,7 +1224,7 @@ When approved:
 1. On GitHub: Settings → rename repo from `gcp-dbt-terraform` to `terraform-google-dbt-runner`. GitHub will set up an automatic redirect for the old name, but **module sources that include a SHA or ref still resolve via the new name** — consumers must still update their `source = ` strings to avoid future breakage.
 2. Update CLAUDE.md references to the old name.
 3. Notify consumers (`rag-research-tool` is named in CLAUDE.md) — they'll need to update their `source = "github.com/DarojaAI/..."` and re-run `terraform init -upgrade`.
-4. Bump VERSION to `1.1.0` (minor — additive features) and let `release.yml` tag.
+4. Merge a conventional commit (`feat:`) on `main` and let release-please tag the release.
 5. Publish on the Terraform Registry: https://registry.terraform.io/github/create — sign in, select the renamed repo, confirm.
 
 ---
