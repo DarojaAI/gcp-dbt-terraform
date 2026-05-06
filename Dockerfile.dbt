@@ -66,19 +66,21 @@ WORKDIR /app/dbt
 # Change ownership to non-root user
 RUN chown -R dbtuser:dbtgrp /app
 
-# Copy entrypoint script (must be before USER switch)
+# Copy entrypoint and validation scripts (must be before USER switch)
 COPY scripts/docker-entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY scripts/validate-build.sh /usr/local/bin/validate-build.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/validate-build.sh
 
-# Switch to non-root user
-USER dbtuser
+# Validation: Ensure dbt is installed and callable (as root before switching user)
+RUN dbt --version && \
+    bash /usr/local/bin/validate-build.sh
 
 # Switch to non-root user
 USER dbtuser
 
 # Health check for Cloud Run (checkov CKV_DOCKER_2)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+    CMD dbt --version || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["${DBT_COMMAND:-dbt run --target prod}"]
+CMD ["run --target prod"]
