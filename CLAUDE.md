@@ -69,17 +69,20 @@ bash gcp-dbt-terraform/scripts/validate-dbt-docker.sh
 The script builds `Dockerfile.dbt` against the calling project's context and runs 7 checks (build, `dbt --version`, `dbt parse`, image size, env-var passthrough, pip list, CMD dry-run). Exit codes 1–4 map to specific failure stages — see the script header.
 
 ### Releasing
-1. Merge changes to `main`.
-2. On `main`: edit `VERSION` (currently `1.0.1`), commit, push.
-3. `.github/workflows/release.yml` detects the VERSION change, creates the `vX.Y.Z` tag on that main commit, and generates a GitHub Release.
 
-**Never bump VERSION on a feature branch** — the tag will land on the branch commit, not main. See `RELEASE.md`. If a tag lands wrong, delete locally + remote (`git push origin :refs/tags/vX.Y.Z`) and re-bump on main.
+This module uses [release-please](https://github.com/googleapis/release-please) driven by [Conventional Commits](https://www.conventionalcommits.org/).
+
+- Land conventional commits (`feat:`, `fix:`, `feat!:` `refactor!:`) on `main`.
+- The `Release Please` workflow opens a release PR that bumps the version, updates `CHANGELOG.md`, and updates `.release-please-manifest.json`.
+- Merging the release PR creates the `vX.Y.Z` tag and the GitHub Release.
+
+Consumers pin tags directly: `source = "github.com/DarojaAI/gcp-dbt-terraform?ref=vX.Y.Z"`.
 
 ## CI
 
 `.github/workflows/pre-commit.yml` runs on push/PR to main: `terraform fmt -check -recursive`, `terraform validate`, and `tflint`. Terraform pinned to `~1.6`, tflint to `v0.52.0`, google ruleset to `0.39.0` (in `.tflint.hcl`). Match these versions locally to avoid CI surprises.
 
-`.github/workflows/release.yml` is the VERSION-file release trigger described above.
+`.github/workflows/release-please.yml` drives release-please from conventional commits on `main`.
 
 ## Feedback-loop tooling
 
