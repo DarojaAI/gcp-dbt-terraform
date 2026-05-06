@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.0](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v3.0.0...v3.1.0) (2026-05-06)
+
+
+### Features
+
+* **dbt:** add docker-entrypoint.sh with pre-flight diagnostics ([fffafba](https://github.com/DarojaAI/gcp-dbt-terraform/commit/fffafba3e8239a76a3b33002c79bad02a61dc658))
+* **dbt:** use entrypoint script instead of bare sh -c ([045a41a](https://github.com/DarojaAI/gcp-dbt-terraform/commit/045a41ac3f9c6123384fa48c643ab331bcfa0fe9))
+
+
+### Bug Fixes
+
+* **dbt:** copy entrypoint before USER switch to allow chmod ([89c0b5d](https://github.com/DarojaAI/gcp-dbt-terraform/commit/89c0b5dea3b3e35937989634009c8a3099fc3f22))
+* **dbt:** remove incorrect --project-dir flag in dbt deps step ([5482cd0](https://github.com/DarojaAI/gcp-dbt-terraform/commit/5482cd089d3bf80b1e20c4383d5416d76a2ae6ba))
+
 ## [3.0.0](https://github.com/DarojaAI/gcp-dbt-terraform/compare/v2.1.0...v3.0.0) (2026-05-06)
 
 
