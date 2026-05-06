@@ -57,7 +57,7 @@ RUN if [ -f ./dbt/requirements.txt ]; then \
 
 # Install dbt packages (from packages.yml if present)
 RUN if [ -f ./dbt/packages.yml ]; then \
-    cd ./dbt && dbt deps --project-dir ./dbt; \
+    cd ./dbt && dbt deps; \
     fi
 
 # Set working directory for dbt execution
