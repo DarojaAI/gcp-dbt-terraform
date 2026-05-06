@@ -47,15 +47,13 @@ variable "postgres_port" {
 }
 
 variable "postgres_db" {
-  description = "PostgreSQL database name"
+  description = "PostgreSQL database name (no default — consumer must set)"
   type        = string
-  default     = "rag_taxonomy"
 }
 
 variable "postgres_user" {
-  description = "PostgreSQL database user"
+  description = "PostgreSQL database user (no default — consumer must set)"
   type        = string
-  default     = "rag_admin"
 }
 
 variable "postgres_password_secret" {
