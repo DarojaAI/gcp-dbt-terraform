@@ -39,7 +39,7 @@ jobs:
           cd examples/basic && terraform validate
 
       - name: Run terraform test
-        run: cd examples/basic && terraform test -verbose
+        run: terraform test -verbose
 
       - name: Run TFLint
         uses: terraform-linters/setup-tflint@v4
