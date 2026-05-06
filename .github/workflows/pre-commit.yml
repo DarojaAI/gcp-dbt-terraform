@@ -39,6 +39,9 @@ jobs:
           cd examples/basic && terraform validate
 
       - name: Run terraform test
+        env:
+          # Plan-only tests don't call Google APIs, but provider v7 demands a token.
+          GOOGLE_OAUTH_ACCESS_TOKEN: fake-token-for-plan-only
         run: terraform test -verbose
 
       - name: Run TFLint
