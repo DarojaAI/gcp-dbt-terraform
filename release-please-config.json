@@ -5,15 +5,7 @@
       "bump-minor-pre-major": false,
       "bump-patch-for-minor-pre-major": false,
       "draft": false,
-      "prerelease": false,
-      "plugins": [
-        [
-          "@semantic-release/exec",
-          {
-            "prepareCmd": "sed -i 's|## Current Version: .*|## Current Version: ${nextRelease.version}|' VERSIONS.md && git add VERSIONS.md"
-          }
-        ]
-      ]
+      "prerelease": false
     }
   }
 }
