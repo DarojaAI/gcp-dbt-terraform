@@ -10,7 +10,7 @@
         [
           "@semantic-release/exec",
           {
-            "prepareCmd": "sed -i 's/## Current Version: .*/## Current Version: ${nextRelease.version}/' VERSIONS.md && sed -i 's|^| [bot-update] |' VERSIONS.md | head -1 | xargs -I {} git add VERSIONS.md"
+            "prepareCmd": "sed -i 's|## Current Version: .*|## Current Version: ${nextRelease.version}|' VERSIONS.md && git add VERSIONS.md"
           }
         ]
       ]
