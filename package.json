@@ -1,10 +1,6 @@
 {
   "name": "gcp-dbt-terraform",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "private": true,
-  "description": "Terraform module for dbt Cloud Run Jobs on GCP",
-  "devDependencies": {
-    "semantic-release": "^22.0.0",
-    "@semantic-release/exec": "^6.0.0"
-  }
+  "description": "Terraform module for dbt Cloud Run Jobs on GCP"
 }
