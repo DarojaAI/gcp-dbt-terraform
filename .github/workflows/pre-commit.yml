@@ -14,7 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  terraform-validate:
+  pre-commit-validation:
+    name: Pre-Commit Validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
